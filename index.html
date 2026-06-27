@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Estação do Dente · CRM</title>
+<style>
+  :root{
+    --bg:#f1f5f9;--surface:#fff;--ink:#16306e;--muted:#64748b;--faint:#94a3b8;--line:#e2e8f0;
+    --teal:#0e88d6;--teal-d:#0566ad;--teal-l:#d8edfb;--emerald:#059669;--rose:#e11d48;--amber:#d97706;
+    --gold:#d4a017;--sky:#0284c7;--indigo:#4f46e5;--violet:#7c3aed;--orange:#ea580c;--red:#dc2626;
+    --slate9:#0c2050;--radius:12px;--shadow:0 1px 2px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.05);
+  }
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+  button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inherit;font-size:14px}
+  a{color:var(--teal-d)}::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px}
+  .app{display:flex;min-height:100vh}
+  .side{width:224px;flex:0 0 224px;background:var(--slate9);color:#cbd5e1;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .brand{display:flex;align-items:center;padding:12px;border-bottom:1px solid #16306e}
+  .brand .logo{height:32px;width:32px;border-radius:9px;background:var(--teal);display:grid;place-items:center;color:#fff}
+  .brand b{color:#fff;font-weight:600}.brand b span{color:#8cc8f4}
+  nav{flex:1;padding:10px;overflow-y:auto}
+  .navbtn{width:100%;display:flex;align-items:center;gap:10px;padding:9px 11px;border:0;background:transparent;color:#cbd5e1;border-radius:9px;font-size:14px;text-align:left;margin-bottom:2px}
+  .navbtn:hover{background:#16306e}.navbtn.active{background:var(--teal);color:#fff}.navbtn svg{flex:0 0 18px}
+  .me{padding:10px;border-top:1px solid #16306e;display:flex;align-items:center;gap:8px}
+  .me .info{flex:1;min-width:0}.me .info p{margin:0;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.me .info small{color:#64748b}
+  .iconbtn{background:transparent;border:0;color:#94a3b8;display:grid;place-items:center;padding:4px;border-radius:7px}.iconbtn:hover{color:#fff;background:#16306e}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{height:54px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:20}
+  .crumb{color:var(--muted);font-size:13px}.crumb b{color:var(--ink)}
+  .content{padding:22px;max-width:1180px;width:100%}
+  .row{display:flex;align-items:center;gap:10px}.between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .grid{display:grid;gap:12px}.h2{font-size:18px;font-weight:600;margin:0}.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+  .muted{color:var(--muted)}.faint{color:var(--faint)}.mt{margin-top:16px}.mb{margin-bottom:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}.pad{padding:16px}
+  .sep{height:1px;background:var(--line);margin:12px 0}.right{text-align:right}.center{text-align:center}
+  .label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+  .uppr{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+  .input,select.input,textarea.input{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:8px 11px;outline:none;background:#fff;color:var(--ink)}
+  .input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.15)}textarea.input{resize:vertical;min-height:64px}
+  .btn{border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:9px;padding:8px 13px;font-size:14px;display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{background:#f8fafc}.btn-primary{background:var(--teal-d);border-color:var(--teal-d);color:#fff}.btn-primary:hover{background:#115e56}
+  .btn-emerald{background:var(--emerald);border-color:var(--emerald);color:#fff}.btn-danger{background:#fff;border-color:#fecdd3;color:var(--rose)}.btn-danger:hover{background:#fff1f2}
+  .btn-ghost{border-color:transparent;background:transparent;color:var(--muted)}.btn-ghost:hover{background:#f1f5f9}
+  .btn-sm{padding:5px 10px;font-size:13px}.btn-block{width:100%;justify-content:center}.btn:disabled{opacity:.5;cursor:not-allowed}
+  .badge{display:inline-flex;align-items:center;gap:5px;border:1px solid;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:500;white-space:nowrap}
+  .t-slate{background:#f1f5f9;color:#475569;border-color:#e2e8f0}.t-sky{background:#e0f2fe;color:#0369a1;border-color:#bae6fd}
+  .t-indigo{background:#e0e7ff;color:#4338ca;border-color:#c7d2fe}.t-violet{background:#ede9fe;color:#6d28d9;border-color:#ddd6fe}
+  .t-emerald{background:#d1fae5;color:#047857;border-color:#a7f3d0}.t-amber{background:#fef3c7;color:#b45309;border-color:#fde68a}
+  .t-orange{background:#ffedd5;color:#c2410c;border-color:#fed7aa}.t-rose{background:#ffe4e6;color:#be123c;border-color:#fecdd3}
+  .t-red{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+  .dot{height:8px;width:8px;border-radius:999px;display:inline-block}
+  .d-slate{background:#94a3b8}.d-sky{background:#0ea5e9}.d-indigo{background:#6366f1}.d-violet{background:#8b5cf6}
+  .d-emerald{background:#10b981}.d-amber{background:#f59e0b}.d-orange{background:#f97316}.d-rose{background:#f43f5e}.d-red{background:#ef4444}
+  .av{height:34px;width:34px;flex:0 0 34px;border-radius:999px;background:var(--teal-d);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+  .av.sm{height:30px;width:30px;flex-basis:30px}.av.lg{height:42px;width:42px;flex-basis:42px;font-size:14px}
+  table{width:100%;border-collapse:collapse}
+  thead th{text-align:left;font-size:11px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.03em;padding:10px 14px;background:#f8fafc;border-bottom:1px solid var(--line)}
+  tbody td{padding:11px 14px;border-bottom:1px solid #f1f5f9}tbody tr:last-child td{border-bottom:0}tbody tr.clk:hover{background:#f8fafc;cursor:pointer}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+  .kpi .k{font-size:12px;color:var(--muted)}.kpi .v{font-size:20px;font-weight:600;margin-top:3px}.kpi .s{font-size:12px;color:var(--faint);margin-top:1px}
+  .board{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px}
+  .col{width:248px;flex:0 0 248px}.col h4{margin:0 0 2px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;justify-content:space-between}
+  .col h4 .cnt{color:var(--faint);font-weight:500}.col .sum{font-size:12px;color:var(--faint);margin:0 0 8px}
+  .drop{min-height:50px;display:flex;flex-direction:column;gap:8px;border-radius:10px;padding:2px;transition:background .12s}
+  .drop.over{background:#e2f3f1;outline:2px dashed var(--teal)}
+  .lead{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px;cursor:grab}
+  .lead:hover{border-color:var(--teal);box-shadow:var(--shadow)}.lead .nm{font-weight:600;font-size:14px;line-height:1.2}
+  .lead .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9;font-size:12px;color:var(--faint)}
+  .scrim{position:fixed;inset:0;background:rgba(15,23,42,.42);backdrop-filter:blur(2px);z-index:40;display:flex;justify-content:flex-end}
+  .scrim.center{align-items:center;justify-content:center;padding:16px}
+  .drawer{width:460px;max-width:100%;background:#fff;height:100%;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.12)}
+  .dhead{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:14px 18px;z-index:2}
+  .dtabs{display:flex;gap:18px;padding:0 18px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:64px;z-index:2}
+  .dtab{border:0;background:transparent;padding:11px 0;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+  .dtab.active{color:var(--teal-d);border-bottom-color:var(--teal-d);font-weight:600}
+  .modal{width:520px;max-width:100%;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}.modal.sm{width:400px}
+  .mhead{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}.mhead h3{margin:0;font-size:16px}
+  .mbody{padding:18px}.mfoot{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--line)}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:12px}
+  .tl{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line)}
+  .tl li{position:relative;margin-bottom:14px}.tl li .pin{position:absolute;left:-25px;top:1px;height:14px;width:14px;border-radius:999px;background:var(--teal);border:2px solid #fff}
+  .tl li p{margin:0;font-size:13px}.tl li small{color:var(--faint);font-size:11px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:3px 9px;font-size:12px}
+  .chip button{border:0;background:transparent;color:var(--faint);display:grid;place-items:center;padding:0}.chip button:hover{color:var(--rose)}
+  .empty{padding:40px 16px;text-align:center;color:var(--faint)}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px}
+  .sync-saved{color:#047857;background:#d1fae5}.sync-saving{color:#b45309;background:#fef3c7}.sync-offline{color:#475569;background:#f1f5f9}.sync-error{color:#be123c;background:#ffe4e6}
+  .tabs{display:flex;gap:4px;background:#f1f5f9;padding:4px;border-radius:10px;width:fit-content;margin-bottom:14px}
+  .tab{border:0;background:transparent;padding:6px 14px;border-radius:7px;font-size:13px;color:var(--muted)}.tab.active{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+  .checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .checkrow{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:8px}
+  .donut{height:150px;width:150px;border-radius:999px}.legend{display:flex;flex-direction:column;gap:6px;font-size:13px}.legend i{height:10px;width:10px;border-radius:3px;display:inline-block;margin-right:7px}
+  .funbar{display:flex;align-items:center;gap:10px;margin-bottom:7px}.funbar .nm{width:120px;font-size:12px;color:var(--muted);text-align:right;flex:0 0 120px}
+  .funbar .track{flex:1;background:#f1f5f9;border-radius:6px;height:22px;overflow:hidden}.funbar .fill{height:100%;background:var(--teal);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;color:#fff;font-size:11px;font-weight:600;min-width:22px}
+  /* ortho */
+  .obar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 18px;border-bottom:1px solid var(--line)}
+  .ostat{background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:8px 10px}.ostat .l{font-size:10px;color:var(--faint);text-transform:uppercase}.ostat .v{font-size:14px;font-weight:600;margin-top:2px}
+  .alertbox{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:11px 13px;font-size:13px;color:#92400e}
+  .seg{display:flex;gap:6px}.segbtn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 12px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .segbtn.on{border-color:var(--teal);background:var(--teal-l);color:var(--teal-d);font-weight:600}
+  .benefit{border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:10px}
+  .gold{background:linear-gradient(120deg,#d4a017,#b8860b);color:#fff;border:0}
+  .selcard{border:1px solid var(--line);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#fff}
+  .selcard.on{border-color:var(--violet);background:#f5f3ff;color:#5b21b6}
+  @media(max-width:820px){.side{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}.obar{grid-template-columns:repeat(2,1fr)}}
+  .login{min-height:100vh;background:var(--slate9);display:grid;place-items:center;padding:16px}.login .box{width:360px;max-width:100%}
+  .login .card2{background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .login h1{color:#fff;text-align:center;font-size:24px;margin:10px 0 2px}.login h1 span{color:#8cc8f4}
+  .login .lead2{color:#94a3b8;text-align:center;font-size:13px;margin:0 0 20px}.hint{font-size:12px;color:#94a3b8;text-align:center;margin-top:14px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* ===========================================================================
+   ClínicaCRM v3 — single-file. Persistência localStorage (Firebase opcional).
+   =========================================================================== */
+const firebaseConfig={apiKey:"",authDomain:"",projectId:"",storageBucket:"",messagingSenderId:"",appId:""};
+const USE_FIREBASE=!!firebaseConfig.apiKey;
+const LS_KEY="crm_clinica_state_v4";
+const LOGO="data:image/webp;base64,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";
+
+const $=(s,r=document)=>r.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const stamp=()=>new Date().toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
+const BRL=n=>(Number(n)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const initials=n=>(n||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+const addMonths=(iso,m)=>{const d=new Date(iso);d.setMonth(d.getMonth()+m);return d.toISOString().slice(0,10);};
+const monthsSince=iso=>{if(!iso)return 0;const a=new Date(iso),b=new Date();return Math.max(0,(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth()));};
+const fmtDate=iso=>iso?new Date(iso+"T00:00").toLocaleDateString("pt-BR"):"—";
+function getDeep(o,p){return p.split(".").reduce((a,k)=>a==null?a:a[k],o);}
+function setDeep(o,p,v){const ks=p.split(".");let c=o;for(let i=0;i<ks.length-1;i++){c[ks[i]]=c[ks[i]]||{};c=c[ks[i]];}c[ks[ks.length-1]]=v;}
+
+const I={
+  dashboard:'<path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>',
+  pipeline:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  patients:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  agenda:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  tasks:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  materials:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  team:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  finance:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  audit:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
+  ortho:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  clients:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  crown:'<path d="M2 18h20l-2-9-5 4-3-6-3 6-5-4z"/>',phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  video:'<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>',
+  pdf:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+  arrow:'<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',check:'<polyline points="20 6 9 17 4 12"/>',star:'<polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5 12 2"/>',
+  gift:'<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+};
+const svg=(k,sz=18)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I[k]||""}</svg>`;
+
+const STAGES=[{id:"lead",label:"Lead Gerado",tone:"slate"},{id:"contatado",label:"Contatado",tone:"sky"},{id:"agendado",label:"Agendado",tone:"indigo"},{id:"compareceu",label:"Compareceu",tone:"violet"},{id:"fechou",label:"Fechou",tone:"emerald"},{id:"reativacao",label:"Reativação",tone:"amber"},{id:"esfriou",label:"Esfriou",tone:"orange"},{id:"noshow",label:"No Show",tone:"rose"},{id:"perdido",label:"Perdido",tone:"red"}];
+const stage=id=>STAGES.find(s=>s.id===id)||{label:id,tone:"slate"};
+const ORIGINS=["Facebook","Instagram","Google","Indicação","Orgânico"];
+const TREATMENTS=["Ortodontia","Implante","Clareamento","Lentes de Contato","Prótese","OrthoClub","Avaliação"];
+const ORIGIN_COLORS={Facebook:"#1877f2",Instagram:"#d6249f",Google:"#ea4335",Indicação:"#0d9488",Orgânico:"#10b981"};
+const POTENCIAL=["Clareamento","Faceta","Implante","Prótese","Limpeza Premium","Harmonização"];
+const MODULES=[{id:"dashboard",label:"Mentoria",icon:"dashboard"},{id:"pipeline",label:"Pipeline",icon:"pipeline"},{id:"clients",label:"Clientes",icon:"clients"},{id:"agenda",label:"Agenda",icon:"agenda"},{id:"tasks",label:"Tarefas",icon:"tasks"},{id:"materials",label:"Materiais",icon:"materials"},{id:"team",label:"Equipe",icon:"team"},{id:"finance",label:"Financeiro",icon:"finance"},{id:"orthoclub",label:"OrthoClub",icon:"ortho"},{id:"audit",label:"Auditoria",icon:"audit"}];
+const modLabel=id=>(MODULES.find(m=>m.id===id)||{}).label||id;
+
+function defaultRoles(){return{
+  CEO:{permissions:MODULES.map(m=>m.id),builtin:true},
+  Mentor:{permissions:["dashboard","pipeline","clients","agenda","tasks","materials","team","audit","orthoclub"],builtin:true},
+  Gestor:{permissions:["dashboard","pipeline","clients","agenda","tasks","materials","team","orthoclub"],builtin:true},
+  Vendedor:{permissions:["pipeline","clients","agenda","tasks","materials","orthoclub"],builtin:true},
+  Recepção:{permissions:["pipeline","clients","agenda","tasks","orthoclub"],builtin:true},
+  Financeiro:{permissions:["dashboard","finance","audit","orthoclub"],builtin:true},
+};}
+function seedState(){return{
+  settings:{metaFaturamento:0,metaPacientes:0,investimento:0,custoLead:0,custoAgendamento:0,custoVenda:0},
+  roles:defaultRoles(),
+  users:[{id:"admin",name:"Administrador",email:"admin@clinica.com",password:"admin",role:"CEO",commission:0,active:true,permissions:null}],
+  patients:[],finance:[],tasks:[],events:[],materials:[],tags:[],
+  audit:[],
+};}
+
+/* defaults for new clinical/ortho fields */
+function blankClub(){return{active:false,dataEntrada:todayISO(),status:"Ativo",mensalidade:0,formaPagamento:"PIX Recorrente",pagamentos:[],aparelhoInstalado:false,ortodontista:"",ultimaManutencao:null,proxManutencao:null,manutencoes:[],limpeza:{ultima:null,uses:0},extracao:{ultima:null,uses:0},contatos:[],potencial:[],obs:"",history:[]};}
+function ensurePatient(p){
+  p.tags=p.tags||[];p.comments=p.comments||[];p.history=p.history||[];p.evolution=p.evolution||{};
+  p.indicadoPor=p.indicadoPor||"";p.indicou=p.indicou||[];p.retornos=p.retornos||[];p.situacao=p.situacao||"";
+  if(!p.club)p.club=blankClub();
+  return p;
+}
+function benefit(b,months){if(!b||!b.ultima)return{status:"Disponível",available:true,prox:null};const prox=addMonths(b.ultima,months);const available=new Date()>=new Date(prox);return{status:available?"Disponível":"Utilizado",available,prox};}
+
+/* persistence */
+let fb=null,remoteApplying=false,saveTimer=null;
+function loadLocal(){try{const r=localStorage.getItem(LS_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+function saveLocal(s){localStorage.setItem(LS_KEY,JSON.stringify(s));}
+function setSync(kind){const map={saved:["Online · salvo","sync-saved"],saving:["Salvando…","sync-saving"],offline:["Offline","sync-offline"],error:["Erro de sincronização","sync-error"]};const[t,c]=map[kind]||map.saved;const el=$("#sync");if(el){el.className="pill "+c;el.textContent=t;}}
+function persist(){if(remoteApplying)return;setSync("saving");clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{if(fb){await fb.setDoc(fb.ref,JSON.parse(JSON.stringify(state)));}else{saveLocal(state);}setSync(navigator.onLine?"saved":"offline");}catch(e){console.error(e);setSync("error");}},250);}
+async function initFirebase(){const app=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");const fs=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");const a=app.initializeApp(firebaseConfig);const db=fs.getFirestore(a);const ref=fs.doc(db,"crm","state");fb={setDoc:fs.setDoc,ref};fs.onSnapshot(ref,snap=>{if(snap.exists()){remoteApplying=true;state=snap.data();remoteApplying=false;if(session)render();}else{fs.setDoc(ref,JSON.parse(JSON.stringify(state)));}});}
+
+/* state */
+let state=loadLocal()||seedState();
+let session=null,view="dashboard",openId=null,drawerType=null,drawerTab="neg",teamTab="membros",finTab="visao";
+let period={mode:"geral",from:todayISO(),to:todayISO()};
+function commit(mut,audit){mut(state);if(audit)state.audit.unshift({id:uid(),at:stamp(),who:session?session.name:"Sistema",...audit});persist();render();}
+const effectivePerms=u=>(u.permissions!==null&&u.permissions!==undefined)?u.permissions:(state.roles[u.role]?.permissions||[]);
+const can=m=>session&&effectivePerms(session).includes(m);
+const isMentorLevel=()=>session&&(session.role==="CEO"||session.role==="Mentor");
+const canManageRoles=()=>session&&["CEO","Mentor","Gestor"].includes(session.role);
+
+function periodRange(){if(period.mode==="geral")return null;if(period.mode==="mes"){const d=new Date();return[new Date(d.getFullYear(),d.getMonth(),1).toISOString().slice(0,10),todayISO()];}return[period.from,period.to];}
+function inPeriod(iso){const r=periodRange();if(!r||!iso)return true;return iso>=r[0]&&iso<=r[1];}
+
+/* ===== RENDER ===== */
+function render(){const root=$("#root");if(!session){root.innerHTML=loginView();return;}if(!can(view)){view=effectivePerms(session)[0]||"dashboard";}root.innerHTML=shell(viewBody());if(openId)renderActiveDrawer();}
+function shell(body){
+  const nav=MODULES.filter(m=>can(m.id)).map(m=>`<button class="navbtn ${view===m.id?'active':''}" data-act="nav" data-id="${m.id}">${svg(m.icon)}${m.label}</button>`).join("");
+  return `<div class="app"><aside class="side">
+    <div class="brand"><img src="${LOGO}" alt="Estação do Dente" style="width:100%;display:block;border-radius:8px"></div>
+    <nav>${nav}</nav>
+    <div class="me">${session.role==="CEO"?`<span style="color:#fbbf24">${svg("crown",16)}</span>`:`<div class="av sm">${initials(session.name)}</div>`}
+      <div class="info"><p>${esc(session.name)}</p><small>${esc(session.role)}</small></div>
+      <button class="iconbtn" data-act="logout" title="Sair">${svg("out",17)}</button></div>
+    </aside><div class="main">
+    <div class="topbar"><div class="crumb">Operação comercial · <b>${modLabel(view)}</b></div><span id="sync" class="pill sync-saved">Online · salvo</span></div>
+    <div class="content">${body}</div></div></div>`;
+}
+function viewBody(){switch(view){
+  case"dashboard":return dashboardView();case"pipeline":return pipelineView();case"clients":return clientsView();
+  case"agenda":return agendaView();case"tasks":return tasksView();
+  case"materials":return materialsView();case"team":return teamView();case"finance":return financeView();
+  case"audit":return auditView();case"orthoclub":return orthoView();default:return"";}}
+
+/* ===== LOGIN ===== */
+function loginView(){return `<div class="login"><div class="box">
+  <div class="center" style="margin-bottom:18px"><img src="${LOGO}" alt="Estação do Dente" style="width:260px;max-width:82%;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)"></div>
+  <p class="lead2" style="margin-top:0">Gestão comercial da clínica</p>
+  <div class="card2"><label class="label" style="color:#475569">E-mail</label>
+    <input id="lg-email" class="input" placeholder="seu@email.com" style="margin-bottom:12px">
+    <label class="label" style="color:#475569">Senha</label>
+    <input id="lg-pass" class="input" type="password" placeholder="••••">
+    <p id="lg-err" style="color:#e11d48;font-size:12px;margin:8px 0 0;display:none"></p>
+    <button class="btn btn-primary btn-block" style="margin-top:16px" data-act="login">Entrar</button></div>
+  <p class="hint">Acesso inicial: <b style="color:#cbd5e1">admin@clinica.com</b> / senha <b style="color:#cbd5e1">admin</b></p>
+</div></div>`;}
+
+/* ===== DASHBOARD ===== */
+function dashboardView(){
+  const pats=state.patients.filter(p=>inPeriod(p.createdAt)),fin=state.finance.filter(f=>inPeriod(f.date)),S=state.settings;
+  const fechados=pats.filter(p=>p.stage==="fechou");
+  const closedP=state.patients.filter(p=>p.stage==="fechou"&&inPeriod(p.closedAt||p.createdAt));
+  const faturamento=closedP.reduce((s,p)=>s+(+p.closedValue||0),0);
+  const leads=pats.length,agendados=pats.filter(p=>["agendado","compareceu","fechou","noshow"].includes(p.stage)).length;
+  const compareceu=pats.filter(p=>["compareceu","fechou"].includes(p.stage)).length,noshow=pats.filter(p=>p.stage==="noshow").length,reativ=pats.filter(p=>p.stage==="reativacao").length;
+  const invest=+S.investimento||fin.filter(f=>f.type==="out"&&/tráfego|trafego|ads/i.test(f.desc)).reduce((s,f)=>s+f.value,0);
+  const roi=invest?((faturamento-invest)/invest*100):0,roas=invest?(faturamento/invest):0;
+  const cpl=+S.custoLead||(leads?invest/leads:0),cpa=+S.custoAgendamento||(agendados?invest/agendados:0),cpv=+S.custoVenda||(closedP.length?invest/closedP.length:0);
+  const fech=agendados?(fechados.length/agendados*100):0,comp=agendados?(compareceu/agendados*100):0;
+  const meta=+S.metaFaturamento,metaPac=+S.metaPacientes,goalPct=meta?Math.min(100,faturamento/meta*100):0,pacPct=metaPac?Math.min(100,closedP.length/metaPac*100):0;
+  const sm0=startOfMonth();const fechMes=state.patients.filter(p=>p.stage==="fechou"&&p.closedAt&&p.closedAt>=sm0);const realizadoMes=fechMes.reduce((s,p)=>s+(+p.closedValue||0),0);const metaFalta=meta-realizadoMes;const metaPctMes=meta?Math.min(100,realizadoMes/meta*100):0;const mesNome=new Date().toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  const fStages=STAGES.filter(s=>!["reativacao","esfriou","perdido"].includes(s.id));
+  const maxF=Math.max(1,...fStages.map(s=>pats.filter(p=>p.stage===s.id).length));
+  const funnel=fStages.map(s=>{const q=pats.filter(p=>p.stage===s.id).length;return `<div class="funbar"><div class="nm">${s.label}</div><div class="track"><div class="fill" style="width:${q/maxF*100}%">${q||""}</div></div></div>`;}).join("");
+  const oc=ORIGINS.map(o=>({o,n:pats.filter(p=>p.origin===o).length})).filter(x=>x.n);const totalO=oc.reduce((s,x)=>s+x.n,0)||1;
+  let acc=0;const segs=oc.map(x=>{const a=acc/totalO*360;acc+=x.n;return `${ORIGIN_COLORS[x.o]} ${a}deg ${acc/totalO*360}deg`;}).join(",");
+  const donut=oc.length?`<div class="row" style="gap:22px"><div class="donut" style="background:conic-gradient(${segs});position:relative"><div style="position:absolute;inset:34px;background:#fff;border-radius:999px;display:grid;place-items:center"><b style="font-size:18px">${totalO}</b></div></div><div class="legend">${oc.map(x=>`<div><i style="background:${ORIGIN_COLORS[x.o]}"></i>${x.o} · ${x.n}</div>`).join("")}</div></div>`:`<div class="empty">Sem leads no período.</div>`;
+  const periodLabel=period.mode==="geral"?"Geral (todos os registros)":period.mode==="mes"?("Mês — "+new Date().toLocaleDateString("pt-BR",{month:"long",year:"numeric"})):("Período — "+fmtDate(period.from)+" a "+fmtDate(period.to));
+  const periodChips=`<div class="row" style="gap:6px">${["geral","mes","custom"].map(m=>`<button class="btn btn-sm ${period.mode===m?'btn-primary':''}" data-act="period" data-id="${m}">${m==="geral"?"Geral":m==="mes"?"Mês":"Período"}</button>`).join("")}${period.mode==="custom"?`<input type="date" class="input" style="width:auto" id="pf-from" value="${period.from}" data-act="period-date"> <span class="faint">até</span> <input type="date" class="input" style="width:auto" id="pf-to" value="${period.to}" data-act="period-date">`:""}</div>`;
+  return `<div class="between mb"><div><h2 class="h2">Dashboard — Mentoria</h2><p class="sub">Filtrando por: <b>${periodLabel}</b></p></div><div class="row">${periodChips}${session.role==="Mentor"?`<button class="btn btn-sm" data-act="goals">${svg("gear",15)} Metas & custos</button>`:""}</div></div>
+    <div class="card pad mb"><div class="uppr mb">Meta x realizado — <span style="text-transform:capitalize">${mesNome}</span></div>
+      <div class="row" style="gap:26px;flex-wrap:wrap;align-items:flex-end">
+        <div><div class="muted" style="font-size:12px">Realizado no mês</div><div style="font-size:26px;font-weight:700">${BRL(realizadoMes)}</div></div>
+        <div><div class="muted" style="font-size:12px">Meta do mês</div><div style="font-size:20px;font-weight:600">${meta?BRL(meta):"—"}</div></div>
+        <div><div class="muted" style="font-size:12px">${meta?(metaFalta>0?"Falta para a meta":"Acima da meta"):"Meta não definida"}</div><div style="font-size:20px;font-weight:700;color:${!meta?'var(--faint)':(metaFalta>0?'var(--amber)':'var(--emerald)')}">${meta?BRL(Math.abs(metaFalta)):"—"}</div></div>
+        <div style="margin-left:auto" class="right"><div class="muted" style="font-size:12px">Atingido</div><div style="font-size:22px;font-weight:700;color:var(--teal-d)">${meta?metaPctMes.toFixed(0)+"%":"—"}</div></div>
+      </div>
+      <div style="height:12px;border-radius:999px;background:#f1f5f9;overflow:hidden;margin-top:12px"><div style="height:100%;background:${meta&&metaFalta<=0?'var(--emerald)':'var(--teal)'};width:${metaPctMes}%"></div></div>
+      <div class="faint" style="font-size:12px;margin-top:6px">Pacientes fechados no mês: ${fechMes.length}${metaPac?" / meta "+metaPac:""}${meta&&metaFalta<=0?" · meta batida":""}${!meta?' · defina a meta na engrenagem "Metas & custos" (cargo Mentor)':""}</div>
+    </div>
+    <div class="kpis mb">${kpi("ROI",roi.toFixed(0)+"%","ROAS "+roas.toFixed(1)+"x")}${kpi("Investimento",BRL(invest),(+S.investimento?"manual":"auto-tráfego"))}${kpi("Custo por lead",BRL(cpl),leads+" leads")}${kpi("Custo por agendamento",BRL(cpa),agendados+" agend.")}${kpi("Custo por venda",BRL(cpv),closedP.length+" vendas")}${kpi("Taxa de fechamento",fech.toFixed(0)+"%")}${kpi("Comparecimento",comp.toFixed(0)+"%")}${kpi("No-show",noshow,reativ+" em reativação")}</div>
+    <div class="g2"><div class="card pad"><div class="uppr mb">Funil comercial</div>${funnel||'<div class="empty">Sem dados.</div>'}</div><div class="card pad"><div class="uppr mb">Leads por origem</div>${donut}</div></div>`;
+}
+const kpi=(k,v,s)=>`<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div>${s?`<div class="s">${s}</div>`:""}</div>`;
+
+/* ===== PIPELINE ===== */
+function pipelineView(){
+  const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name.split(" ")[0]:"—";};
+  const cols=STAGES.filter(s=>s.id!=="fechou").map(s=>{const cards=state.patients.filter(p=>p.stage===s.id);const sum=cards.reduce((a,c)=>a+(+c.estimate||0),0);
+    return `<div class="col" data-drop="${s.id}"><h4><span class="row" style="gap:7px"><span class="dot d-${s.tone}"></span>${s.label}</span><span class="cnt">${cards.length}</span></h4><p class="sum">${BRL(sum)}</p>
+      <div class="drop" data-drop="${s.id}">${cards.map(p=>`<div class="lead" draggable="true" data-drag="${p.id}" data-act="open" data-id="${p.id}">
+        <div class="between"><span class="nm">${esc(p.name)}</span>${p.tags&&p.tags[0]?`<span class="badge t-amber">${esc(p.tags[0])}</span>`:""}</div>
+        <div class="muted" style="font-size:12px;margin-top:2px">${esc(p.treatment||"")}</div>
+        <div class="row between" style="margin-top:8px;font-size:12px"><span class="badge t-slate">${esc(p.origin||"—")}</span><b>${p.estimate?BRL(p.estimate):"—"}</b></div>
+        <div class="meta"><span>${p.owner?on(p.owner):'<span style="color:var(--teal-d)">Solto</span>'}</span><span class="row" style="gap:4px">${svg("clock",11)}${p.daysIn||0}d</span></div><button class="btn btn-sm btn-emerald" style="width:100%;justify-content:center;margin-top:8px" data-act="mark-closed" data-id="${p.id}">${svg("check",13)} Fechou</button></div>`).join("")}</div></div>`;}).join("");
+  return `<div class="between mb"><div><h2 class="h2">Pipeline Comercial</h2><p class="sub">Arraste os cards entre as etapas · clique para abrir</p></div><button class="btn btn-primary" data-act="new-patient">${svg("plus",16)} Novo lead</button></div><div class="board">${cols}</div>`;
+}
+
+/* ===== CLIENTES (fecharam) ===== */
+function clientsView(){
+  const cli=state.patients.filter(p=>p.stage==="fechou");
+  const rows=cli.map(p=>`<tr class="clk" data-act="open" data-id="${p.id}"><td><div class="row"><div class="av sm">${initials(p.name)}</div><b>${esc(p.name)}</b></div></td><td><span class="badge t-slate">${esc(p.origin||"—")}</span></td><td class="muted">${esc(p.treatment||"")}</td><td><span class="badge t-emerald">Fechou</span></td><td class="right" style="font-weight:600">${p.club&&p.club.active?BRL(p.club.mensalidade)+"/mês":BRL(p.closedValue)}</td></tr>`).join("");
+  return `<div class="mb"><h2 class="h2">Clientes</h2><p class="sub">Pacientes que fecharam. Leads em andamento ficam no Pipeline.</p></div>
+    <div class="card"><table><thead><tr><th>Paciente</th><th>Origem</th><th>Tratamento</th><th>Estágio</th><th class="right">Valor</th></tr></thead><tbody>${rows||'<tr><td colspan="5"><div class="empty">Nenhum cliente fechado ainda.</div></td></tr>'}</tbody></table></div>`;
+}
+
+/* ===== PACIENTES (todos) ===== */
+function patientsView(){
+  const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name.split(" ")[0]:"—";};
+  const rows=state.patients.map(p=>{const t=stage(p.stage);return `<tr class="clk" data-act="open" data-id="${p.id}"><td><div class="row"><div class="av sm">${initials(p.name)}</div><div><div style="font-weight:600">${esc(p.name)} ${p.club&&p.club.active?'<span class="badge t-emerald">OrthoClub</span>':''}</div><div class="faint" style="font-size:12px">${esc(p.phone||"")}</div></div></div></td><td class="muted">${esc(p.treatment||"")}</td><td><span class="badge t-slate">${esc(p.origin||"—")}</span></td><td><span class="badge t-${t.tone}">${t.label}</span></td><td class="muted">${p.owner?on(p.owner):'—'}</td><td class="right" style="font-weight:600">${BRL(p.closedValue||p.estimate)}</td></tr>`;}).join("");
+  return `<div class="between mb"><div><h2 class="h2">Pacientes & Leads</h2><p class="sub">${state.patients.length} registros</p></div><button class="btn btn-primary" data-act="new-patient">${svg("plus",16)} Novo lead</button></div>
+    <div class="card"><table><thead><tr><th>Paciente</th><th>Tratamento</th><th>Origem</th><th>Etapa</th><th>Responsável</th><th class="right">Valor</th></tr></thead><tbody>${rows||'<tr><td colspan="6"><div class="empty">Nenhum paciente ainda. Crie o primeiro lead.</div></td></tr>'}</tbody></table></div>`;
+}
+
+/* ===== DRAWER dispatcher ===== */
+function renderActiveDrawer(){const p=state.patients.find(x=>x.id===openId);if(!p){openId=null;$(".scrim")?.remove();return;}ensurePatient(p);const old=document.querySelector(".scrim:not(.center)");if(old)old.remove();
+  const html=drawerType==="ortho"?orthoDrawer(p):patientDrawer(p);document.body.insertAdjacentHTML("beforeend",html);}
+
+/* ---- PATIENT DRAWER (Negociação / Clínico / Agenda) ---- */
+function patientDrawer(p){
+  const t=stage(p.stage);
+  const head=`<div class="dhead row" style="justify-content:space-between;align-items:flex-start">
+    <div class="row"><div class="av lg">${initials(p.name)}</div><div><h3 style="margin:0;font-size:16px">${esc(p.name)}</h3><div class="faint" style="font-size:12px">${t.label} · ${p.daysIn||0}d no estágio ${p.club&&p.club.active?'· <span style="color:#059669">OrthoClub</span>':''}</div></div></div>
+    <button class="iconbtn" style="color:#94a3b8" data-act="close-drawer">${svg("x",18)}</button></div>
+    <div class="dtabs">${[["neg","Negociação"],["cli","Clínico"],["age","Agenda"]].map(([k,l])=>`<button class="dtab ${drawerTab===k?'active':''}" data-act="dtab" data-id="${k}">${l}</button>`).join("")}</div>`;
+  let body="";
+  if(drawerTab==="neg")body=negTab(p);
+  else if(drawerTab==="cli")body=cliTab(p);
+  else body=ageTab(p);
+  return `<div class="scrim"><div class="drawer" data-stop>${head}<div class="pad">${body}</div></div></div>`;
+}
+function negTab(p){
+  const ownerOpts=`<option value="" ${!p.owner?"selected":""}>Equipe</option>`+state.users.filter(u=>u.active).map(u=>`<option value="${u.id}" ${u.id===p.owner?"selected":""}>${esc(u.name.split(" ")[0])}</option>`).join("");
+  const stageOpts=STAGES.map(s=>`<option value="${s.id}" ${s.id===p.stage?"selected":""}>${s.label}</option>`).join("");
+  const tagChips=(p.tags||[]).map(tg=>`<span class="chip">${esc(tg)} <button data-act="untag" data-id="${p.id}" data-v="${esc(tg)}">${svg("x",12)}</button></span>`).join("");
+  const ind=(p.indicou||[]).map(n=>`<span class="chip">${esc(n)} <button data-act="rm-indicou" data-id="${p.id}" data-v="${esc(n)}">${svg("x",12)}</button></span>`).join("");
+  const hist=(p.history||[]).map(h=>`<li><span class="pin"></span><p><span class="badge t-slate" style="font-size:10px;margin-right:6px">${esc(h.type||"log")}</span>${esc(h.text)}</p><small>${esc(h.who)} · ${esc(h.at)}</small></li>`).join("");
+  const cmts=(p.comments||[]).map(c=>`<div class="card pad" style="padding:9px 11px;margin-bottom:6px"><div>${esc(c.text)}</div><small class="faint">${esc(c.who)} · ${esc(c.at)}</small></div>`).join("");
+  return `<button class="btn btn-block mb" data-act="drop-lead" data-id="${p.id}">${svg("lock",14)} Soltar lead (volta para a equipe)</button>
+    <div class="g2"><div><div class="uppr">Telefone</div><div>${esc(p.phone||"—")}</div></div><div><div class="uppr">Origem</div><div>${esc(p.origin||"—")}</div></div></div>
+    <div class="g2 mt"><div class="field"><label class="label">Valor estimado (R$)</label><input class="input" type="number" data-field="estimate" data-log="Valor estimado atualizado" value="${p.estimate||0}"></div><div><div class="uppr">Dias no estágio</div><div>${p.daysIn||0} dia(s)</div></div></div>
+    <div class="field"><label class="label">Valor fechado (R$)</label><input class="input" type="number" data-field="closedValue" value="${p.closedValue||0}"><p class="faint" style="font-size:11px;margin:4px 0 0">Vai pro Financeiro e pro faturamento quando o cliente fecha.</p></div>
+    <div class="field"><label class="label">Responsável</label><select class="input" data-act="set-owner" data-id="${p.id}">${ownerOpts}</select></div>
+    <div class="field"><label class="label">Mover para etapa</label><select class="input" data-act="set-stage" data-id="${p.id}">${stageOpts}</select></div>
+    <div class="field"><label class="label">Etiquetas</label><div class="chips mb">${tagChips||'<span class="faint" style="font-size:12px">Sem etiquetas.</span>'}</div><div class="row" style="gap:8px"><input class="input" id="tag-input" list="taglist" placeholder="Adicionar ou criar"><datalist id="taglist">${state.tags.map(t=>`<option value="${esc(t)}">`).join("")}</datalist><button class="btn btn-sm" data-act="addtag" data-id="${p.id}">Add</button></div></div>
+    <div class="field"><label class="label">${svg("star",12)} Indicado por</label><input class="input" data-field="indicadoPor" value="${esc(p.indicadoPor||"")}" placeholder="Nome de quem indicou (se houver)"></div>
+    <div class="field"><label class="label">Indicou alguém? (adicione os nomes)</label><div class="chips mb">${ind||'<span class="faint" style="font-size:12px">Ninguém ainda</span>'}</div><div class="row" style="gap:8px"><input class="input" id="indicou-input" placeholder="Nome do indicado"><button class="btn btn-sm" data-act="add-indicou" data-id="${p.id}">Add</button></div></div>
+    <div class="field"><label class="label">Atividade & comentários</label><div class="row" style="gap:8px;margin-bottom:8px"><input class="input" id="cmt-input" placeholder="Escrever comentário…"><button class="btn btn-primary btn-sm" data-act="comment" data-id="${p.id}">Enviar</button></div>${cmts}<ul class="tl" style="margin-top:8px">${hist}</ul></div>
+    ${["CEO","Mentor","Gestor"].includes(session.role)?`<button class="btn btn-danger btn-block" data-act="del-patient" data-id="${p.id}">${svg("trash",14)} Excluir lead</button>`:""}`;
+}
+function cliTab(p){
+  const tOpts=TREATMENTS.map(t=>`<option ${p.treatment===t?"selected":""}>${t}</option>`).join("");
+  return `<div class="field"><label class="label">Tratamento</label><select class="input" data-field="treatment">${tOpts}</select></div>
+    <div class="field"><label class="label">Evolução do paciente</label><textarea class="input" data-field="evolution.evolucao" style="min-height:160px" placeholder="Registre a evolução…">${esc(getDeep(p,"evolution.evolucao")||"")}</textarea></div>
+    ${p.club&&p.club.active?`<button class="btn btn-block" data-act="open-ortho" data-id="${p.id}">${svg("ortho",15)} Abrir ficha OrthoClub</button>`:""}`;
+}
+function ageTab(p){
+  const ret=(p.retornos||[]).map(r=>`<div class="card pad" style="padding:9px 11px;margin-bottom:6px"><b>${esc(r.type)}</b> · ${fmtDate(r.date)} ${esc(r.time||"")}<div class="faint" style="font-size:11px">${esc(r.at)}</div></div>`).join("");
+  return `<div class="field"><div class="uppr">Situação</div><div style="font-weight:600">${stage(p.stage).label}</div></div>
+    <div class="field"><div class="uppr mb">Retornos / marcações</div>${ret||'<div class="faint" style="font-size:13px">Sem retornos.</div>'}</div>
+    <div class="row" style="gap:8px"><button class="btn" data-act="add-retorno" data-id="${p.id}">${svg("plus",14)} Agendar retorno</button><button class="btn btn-danger" data-act="conclude" data-id="${p.id}">${svg("lock",13)} Término de procedimento</button></div>
+    <p class="faint" style="font-size:11px;margin-top:8px">"Término de procedimento" exige a senha mestre.</p>`;
+}
+
+/* ---- ORTHOCLUB DRAWER (Ficha / Histórico) ---- */
+function orthoDrawer(p){
+  const c=p.club;const lim=benefit(c.limpeza,4),ext=benefit(c.extracao,1);
+  const receita=(c.pagamentos||[]).reduce((s,x)=>s+x.value,0);
+  const upsell=c.potencial.length>=4?"Alto":c.potencial.length>=2?"Médio":"Baixo";
+  const head=`<div class="dhead row" style="justify-content:space-between;align-items:flex-start">
+    <div class="row"><div class="av lg" style="background:var(--emerald)">${initials(p.name)}</div><div><h3 style="margin:0;font-size:16px">${esc(p.name)}</h3><div class="faint" style="font-size:12px">OrthoClub · ${esc(c.status)}</div></div></div>
+    <button class="iconbtn" style="color:#94a3b8" data-act="close-drawer">${svg("x",18)}</button></div>
+    <div class="obar">
+      ${ostat("Cliente há",monthsSince(c.dataEntrada)+" meses")}${ostat("Receita",BRL(receita))}${ostat("Comparec.",(c.manutencoes||[]).length)}${ostat("Upsell",svg("star",11)+" "+upsell)}
+    </div>
+    <div class="dtabs">${[["ficha","Ficha"],["hist","Histórico"]].map(([k,l])=>`<button class="dtab ${drawerTab===k?'active':''}" data-act="dtab" data-id="${k}">${l}</button>`).join("")}</div>`;
+  let body;
+  if(drawerTab==="hist"){
+    const h=(c.history||[]).map(x=>`<li><span class="pin"></span><p>${esc(x.text)}</p><small>${esc(x.at)}</small></li>`).join("");
+    body=h?`<ul class="tl">${h}</ul>`:`<div class="empty">Nenhum movimento ainda. Pagamentos, manutenções, benefícios e contatos aparecem aqui automaticamente.</div>`;
+  } else {
+    const alerts=[];if(lim.available)alerts.push("Limpeza disponível para uso");if(ext.available)alerts.push("Extração disponível para uso");
+    const pays=(c.pagamentos||[]).slice(0,3).map(x=>`<div class="between" style="font-size:13px;padding:4px 0"><span>${fmtDate(x.date)}</span><b>${BRL(x.value)}</b></div>`).join("");
+    const contatos=(c.contatos||[]).map(x=>`<div style="font-size:13px;padding:3px 0">${esc(x.text)} <span class="faint">· ${esc(x.at)}</span></div>`).join("");
+    const ind=(p.indicou||[]).map(n=>`<span class="chip">${esc(n)} <button data-act="rm-indicou" data-id="${p.id}" data-v="${esc(n)}">${svg("x",12)}</button></span>`).join("");
+    body=`
+    ${alerts.length?`<div class="alertbox mb">${svg("star",13)} <b>Alertas automáticos</b><br>${alerts.map(a=>"• "+a).join("<br>")}</div>`:""}
+    <div class="uppr mb">${svg("patients",13)} Dados do cliente</div>
+    <div class="g2"><div class="field"><label class="label">Telefone</label><input class="input" data-field="phone" value="${esc(p.phone||"")}"></div><div class="field"><label class="label">Data de entrada</label><input class="input" type="date" data-field="club.dataEntrada" value="${c.dataEntrada||todayISO()}"></div></div>
+    <div class="field"><label class="label">Status</label><div class="seg">${["Ativo","Em atraso","Cancelado"].map(s=>`<button class="segbtn ${c.status===s?'on':''}" data-act="oc-status" data-id="${p.id}" data-v="${s}"><span class="dot d-${s==='Ativo'?'emerald':s==='Em atraso'?'amber':'rose'}"></span>${s}</button>`).join("")}</div></div>
+    <div class="sep"></div>
+    <div class="uppr mb">Plano</div>
+    <div class="g2"><div class="field"><label class="label">Mensalidade (R$)</label><input class="input" type="number" data-field="club.mensalidade" value="${c.mensalidade||0}"></div><div class="field"><label class="label">Forma de pagamento</label><input class="input" data-field="club.formaPagamento" value="${esc(c.formaPagamento||"")}"></div></div>
+    <div class="card pad" style="background:#fffbeb;border-color:#fde68a"><div class="between"><div><div class="uppr">Próximo vencimento</div><div>${c.proxVencimento?fmtDate(c.proxVencimento):"— · sem data"}</div></div><button class="btn btn-sm btn-emerald" data-act="oc-pay" data-id="${p.id}">${svg("plus",13)} Registrar pagamento</button></div></div>
+    <div class="uppr mt mb">Últimos 3 pagamentos</div>${pays||'<div class="faint" style="font-size:13px">Nenhum pagamento registrado ainda.</div>'}
+    <div class="sep"></div>
+    <div class="uppr mb">${svg("gift",13)} Tratamento</div>
+    <div class="row mb" style="gap:8px"><button class="btn btn-sm" data-act="oc-aparelho" data-id="${p.id}">${c.aparelhoInstalado?"Aparelho instalado":"Aparelho não instalado"}</button><button class="btn btn-sm" data-act="oc-manut" data-id="${p.id}">${svg("plus",13)} Registrar manutenção</button></div>
+    <div class="g2"><div class="field"><label class="label">Ortodontista</label><input class="input" data-field="club.ortodontista" value="${esc(c.ortodontista||"")}" placeholder="Dra. ..."></div><div><div class="uppr">Comparecimentos</div><div>${(c.manutencoes||[]).length} <span class="faint">automático</span></div></div></div>
+    <div class="g2"><div><div class="uppr">Última manutenção</div><div>${fmtDate(c.ultimaManutencao)}</div></div><div><div class="uppr">Próxima manutenção</div><div>${fmtDate(c.proxManutencao)}</div></div></div>
+    <div class="sep"></div>
+    <div class="uppr mb">${svg("gift",13)} Benefícios</div>
+    ${benefitCard(p,"limpeza","Limpeza","1 limpeza a cada 4 meses",lim)}
+    ${benefitCard(p,"extracao","Extração","1 por mês",ext)}
+    <div class="sep"></div>
+    <div class="uppr mb">${svg("phone",13)} Último contato</div>${contatos||'<div class="faint" style="font-size:13px">Sem contatos registrados.</div>'}
+    <div class="row" style="gap:8px;margin-top:8px"><input class="input" id="contato-input" placeholder="Registrar contato…"><button class="btn btn-sm" data-act="oc-contato" data-id="${p.id}">Add</button></div>
+    <div class="sep"></div>
+    <div class="uppr mb">${svg("star",13)} Indicação</div>
+    <div class="field"><label class="label">Indicado por</label><input class="input" data-field="indicadoPor" value="${esc(p.indicadoPor||"")}" placeholder="Nome de quem indicou (se houver)"></div>
+    <div class="field"><label class="label">Indicou alguém?</label><div class="chips mb">${ind||'<span class="faint" style="font-size:12px">Ninguém ainda</span>'}</div><div class="row" style="gap:8px"><input class="input" id="indicou-input" placeholder="Nome do indicado"><button class="btn btn-sm" data-act="add-indicou" data-id="${p.id}">Add</button></div></div>
+    <div class="sep"></div>
+    <div class="uppr mb">${svg("target",13)} Potencial de venda</div>
+    <div class="checkgrid mb">${POTENCIAL.map(x=>`<div class="selcard ${c.potencial.includes(x)?'on':''}" data-act="oc-pot" data-id="${p.id}" data-v="${x}"><span class="dot ${c.potencial.includes(x)?'d-violet':'d-slate'}"></span>${x}</div>`).join("")}</div>
+    <div class="field"><label class="label">Observações</label><textarea class="input" data-field="club.obs" placeholder="Ex.: Paciente demonstrou interesse em clareamento…">${esc(c.obs||"")}</textarea></div>`;
+  }
+  return `<div class="scrim"><div class="drawer" data-stop>${head}<div class="pad">${body}</div></div></div>`;
+}
+const ostat=(l,v)=>`<div class="ostat"><div class="l">${l}</div><div class="v">${v}</div></div>`;
+function benefitCard(p,key,title,sub,b){
+  return `<div class="benefit"><div class="between"><div><b>${title}</b> <span class="faint" style="font-size:12px">· ${sub}</span></div><button class="btn btn-sm" style="background:#ede9fe;border-color:#ddd6fe;color:#6d28d9" data-act="oc-benefit" data-id="${p.id}" data-v="${key}">Usar agora</button></div>
+    <div class="g2" style="margin-top:8px"><div><div class="uppr">Última</div><div>${fmtDate(b===null?null:(key==='limpeza'?p.club.limpeza.ultima:p.club.extracao.ultima))}</div></div><div><div class="uppr">Próxima disponível</div><div>${fmtDate(b.prox)}</div></div></div>
+    <div style="margin-top:8px"><span class="badge t-${b.available?'emerald':'rose'}"><span class="dot d-${b.available?'emerald':'rose'}"></span>${b.available?'Disponível':'Utilizado'}</span></div></div>`;
+}
+
+/* ===== AGENDA ===== */
+function agendaView(){
+  const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name.split(" ")[0]:"—";};
+  const g={};state.events.forEach(e=>{(g[e.date]=g[e.date]||[]).push(e);});
+  const blocks=Object.keys(g).sort().map(date=>{const d=new Date(date+"T00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
+    const items=g[date].sort((a,b)=>a.time.localeCompare(b.time)).map(e=>`<div class="card" style="padding:11px;display:flex;align-items:center;gap:12px;margin-bottom:8px"><div style="width:52px;text-align:center;font-weight:600;color:var(--teal-d)">${e.time}</div><div style="width:1px;height:30px;background:#f1f5f9"></div><div style="flex:1"><div style="font-weight:600">${esc(e.patient)}</div><div class="faint" style="font-size:12px">${esc(e.type)}</div></div><span class="badge t-slate">${on(e.owner)}</span></div>`).join("");
+    return `<div class="mb"><div class="muted mb" style="font-size:13px;text-transform:capitalize">${d}</div>${items}</div>`;}).join("");
+  return `<div class="between mb"><div><h2 class="h2">Agenda</h2><p class="sub">Consultas, avaliações e retornos</p></div><button class="btn btn-primary" data-act="new-event">${svg("plus",16)} Agendar</button></div>${blocks||'<div class="card"><div class="empty">Nenhum agendamento.</div></div>'}`;
+}
+
+/* ===== TAREFAS ===== */
+function tasksView(){
+  const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name.split(" ")[0]:"—";};
+  const rows=state.tasks.map(t=>`<div class="row" style="gap:12px;padding:11px 14px;border-bottom:1px solid #f1f5f9"><button class="iconbtn" style="border:1px solid ${t.status==='concluída'?'var(--teal)':'#cbd5e1'};background:${t.status==='concluída'?'var(--teal)':'#fff'};color:#fff;height:22px;width:22px" data-act="toggle-task" data-id="${t.id}">${t.status==='concluída'?svg("tasks",12):""}</button><div style="flex:1"><div style="${t.status==='concluída'?'text-decoration:line-through;color:#94a3b8':''}">${esc(t.title)}</div><small class="faint">${on(t.owner)} · vence ${t.due}</small></div><span class="badge t-${t.status==='concluída'?'emerald':'amber'}">${t.status}</span></div>`).join("");
+  return `<div class="between mb"><div><h2 class="h2">Tarefas</h2><p class="sub">Organização da equipe</p></div><button class="btn btn-primary" data-act="new-task">${svg("plus",16)} Nova tarefa</button></div><div class="card">${rows||'<div class="empty">Nenhuma tarefa.</div>'}</div>`;
+}
+
+/* ===== MATERIAIS ===== */
+function materialsView(){
+  const kind={link:"link",video:"video",pdf:"pdf"};
+  const cards=state.materials.map(m=>`<div class="card pad" style="display:flex;align-items:flex-start;gap:12px"><div style="color:var(--teal-d);margin-top:2px">${svg(kind[m.type]||"link",20)}</div><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(m.title)}</div><a href="${esc(m.url)}" target="_blank" rel="noopener" style="font-size:12px;word-break:break-all">${esc(m.url)}</a><div class="faint" style="font-size:11px;margin-top:3px">${esc(m.type.toUpperCase())} · ${esc(m.at)}</div></div>${isMentorLevel()?`<button class="iconbtn" style="color:#cbd5e1" data-act="del-material" data-id="${m.id}">${svg("trash",16)}</button>`:""}</div>`).join("");
+  return `<div class="between mb"><div><h2 class="h2">Materiais da Mentoria</h2><p class="sub">Links, vídeos e PDFs ${isMentorLevel()?"· você pode gerenciar":"· somente leitura"}</p></div>${isMentorLevel()?`<button class="btn btn-primary" data-act="new-material">${svg("plus",16)} Adicionar material</button>`:""}</div><div class="grid" style="grid-template-columns:repeat(2,1fr)">${cards||'<div class="card"><div class="empty">Nenhum material ainda.</div></div>'}</div>`;
+}
+
+/* ===== EQUIPE / CARGOS ===== */
+function teamView(){
+  const tabs=`<div class="tabs"><button class="tab ${teamTab==='membros'?'active':''}" data-act="team-tab" data-id="membros">Membros</button>${canManageRoles()?`<button class="tab ${teamTab==='cargos'?'active':''}" data-act="team-tab" data-id="cargos">Cargos & permissões</button>`:""}</div>`;
+  if(teamTab==="cargos"&&canManageRoles())return rolesView(tabs);
+  const cards=state.users.map(u=>{const custom=u.permissions!==null&&u.permissions!==undefined;return `<div class="card pad"><div class="between"><div class="row"><div class="av">${initials(u.name)}</div><div><div style="font-weight:600">${esc(u.name)}</div><div class="faint" style="font-size:12px">${esc(u.email)}</div></div></div><span class="badge t-${u.active?'emerald':'slate'}">${u.active?'ativo':'inativo'}</span></div><div class="between" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"><span class="badge t-indigo">${esc(u.role)}</span><span class="faint" style="font-size:12px">Comissão ${u.commission||0}%</span><div class="row" style="gap:4px"><button class="btn btn-sm" data-act="edit-user" data-id="${u.id}">Editar</button><button class="btn btn-sm btn-ghost" data-act="toggle-user" data-id="${u.id}">${u.active?'Desativar':'Ativar'}</button></div></div><div class="faint" style="font-size:11px;margin-top:7px">${custom?"Permissões personalizadas":"Herda do cargo"} · ${effectivePerms(u).length} módulos</div></div>`;}).join("");
+  return `<div class="between mb"><div><h2 class="h2">Equipe</h2><p class="sub">Colaboradores, cargos e permissões</p></div><button class="btn btn-primary" data-act="new-user">${svg("plus",16)} Novo colaborador</button></div>${tabs}<div class="grid" style="grid-template-columns:repeat(2,1fr)">${cards}</div>`;
+}
+function rolesView(tabs){
+  const cards=Object.entries(state.roles).map(([name,r])=>`<div class="card pad"><div class="between"><div class="row" style="gap:8px"><span class="badge t-indigo">${esc(name)}</span><span class="faint" style="font-size:11px">${r.builtin?'padrão':'personalizado'}</span></div><div class="row" style="gap:4px"><button class="btn btn-sm" data-act="edit-role" data-id="${esc(name)}">Editar</button>${name!=="CEO"?`<button class="btn btn-sm btn-ghost" data-act="del-role" data-id="${esc(name)}">${svg("trash",14)}</button>`:""}</div></div><div class="chips" style="margin-top:10px">${r.permissions.map(p=>`<span class="chip">${modLabel(p)}</span>`).join("")||'<span class="faint">sem acesso</span>'}</div></div>`).join("");
+  return `<div class="between mb"><div><h2 class="h2">Equipe</h2><p class="sub">Cargos e permissões</p></div><button class="btn btn-primary" data-act="new-role">${svg("plus",16)} Novo cargo</button></div>${tabs}<div class="grid" style="grid-template-columns:repeat(2,1fr)">${cards}</div>`;
+}
+
+/* ===== FINANCEIRO ===== */
+/* ===== FINANCEIRO (contratos, parcelas, fluxo) ===== */
+function addDays(iso,d){const x=new Date(iso);x.setDate(x.getDate()+d);return x.toISOString().slice(0,10);}
+function startOfWeek(){const d=new Date();const D=(d.getDay()+6)%7;d.setDate(d.getDate()-D);return d.toISOString().slice(0,10);}
+function startOfMonth(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1).toISOString().slice(0,10);}
+function genInstallments(c){const list=[];const restante=Math.max(0,(+c.value||0)-(+c.entrada||0));const k=Math.max(1,+c.parcelas||1);const each=Math.round((restante/k)*100)/100;if(+c.entrada>0)list.push({id:uid(),n:"Entrada",value:+c.entrada,due:c.firstDue,status:"pendente",method:c.method,paidDate:null,baixaBy:null});for(let i=1;i<=k;i++)list.push({id:uid(),n:`${i}/${k}`,value:each,due:addMonths(c.firstDue,i-1),status:"pendente",method:c.method,paidDate:null,baixaBy:null});return list;}
+function allInstallments(){const out=[];state.patients.forEach(p=>{if(p.contract&&p.contract.installments)p.contract.installments.forEach(i=>out.push(Object.assign({},i,{patient:p,pid:p.id})));});return out;}
+function instStatus(i){if(i.status==="pago")return"pago";if(i.status==="cancelado")return"cancelado";return i.due<todayISO()?"atrasado":"a vencer";}
+const SITTONE={pago:"emerald","a vencer":"sky",atrasado:"rose",cancelado:"slate",pendente:"amber"};
+
+function financeView(){
+  const canBaixa=["CEO","Financeiro"].includes(session.role);
+  const tabs=`<div class="tabs">${[["visao","Visão"],["receber","A Receber"],["inadimplencia","Inadimplência"],["lancamentos","Lançamentos"]].map(([k,l])=>`<button class="tab ${finTab===k?'active':''}" data-act="fin-tab" data-id="${k}">${l}</button>`).join("")}</div>`;
+  let body;
+  if(finTab==="receber")body=finReceber(canBaixa);
+  else if(finTab==="inadimplencia")body=finInadimplencia();
+  else if(finTab==="lancamentos")body=finLancamentos();
+  else body=finVisao();
+  return `<div class="between mb"><div><h2 class="h2">Financeiro</h2><p class="sub">Contratos, contas a receber e fluxo de caixa</p></div>${finTab==="lancamentos"?`<button class="btn btn-primary" data-act="new-finance">${svg("plus",16)} Lançamento</button>`:""}</div>${tabs}${body}`;
+}
+function finVisao(){
+  const insts=allInstallments();
+  const closedAll=state.patients.filter(p=>p.stage==="fechou");
+  const sw=startOfWeek(),sm=startOfMonth();
+  const fat=iso=>closedAll.filter(p=>p.closedAt&&iso(p.closedAt)).reduce((s,p)=>s+(+p.closedValue||0),0);
+  const fatDia=fat(d=>d===todayISO()),fatSem=fat(d=>d>=sw),fatMes=fat(d=>d>=sm);
+  const recebido=insts.filter(i=>i.status==="pago").reduce((s,i)=>s+i.value,0);
+  const aReceber=insts.filter(i=>instStatus(i)==="a vencer").reduce((s,i)=>s+i.value,0);
+  const atraso=insts.filter(i=>instStatus(i)==="atrasado").reduce((s,i)=>s+i.value,0);
+  const ticket=closedAll.length?closedAll.reduce((s,p)=>s+(+p.closedValue||0),0)/closedAll.length:0;
+  const mrr=state.patients.filter(p=>p.club&&p.club.active&&p.club.status==="Ativo").reduce((s,p)=>s+(+p.club.mensalidade||0),0);
+  const meta=+state.settings.metaFaturamento,metaPct=meta?Math.min(100,fatMes/meta*100):0;
+  const in30=addDays(todayISO(),30);
+  const prox=insts.filter(i=>{const st=instStatus(i);return(st==="a vencer"||st==="atrasado")&&i.due<=in30;}).sort((a,b)=>a.due.localeCompare(b.due));
+  const prox30=prox.reduce((s,i)=>s+i.value,0);
+  const proxList=prox.slice(0,8).map(i=>`<div class="between" style="font-size:13px;padding:6px 0;border-bottom:1px solid #f1f5f9"><span>${fmtDate(i.due)} · ${esc(i.patient.name)} <span class="faint">${esc(i.n)}</span></span><b>${BRL(i.value)}</b></div>`).join("");
+  return `<div class="kpis mb">${kpi("Faturamento (dia)",BRL(fatDia))}${kpi("Faturamento (semana)",BRL(fatSem))}${kpi("Faturamento (mês)",BRL(fatMes))}${kpi("Ticket médio",BRL(ticket),closedAll.length+" contratos")}</div>
+    <div class="kpis mb">${kpi("Recebido",BRL(recebido))}${kpi("A receber",BRL(aReceber))}${kpi("Em atraso",BRL(atraso))}${kpi("Receita recorrente (MRR)",BRL(mrr),"ARR "+BRL(mrr*12))}</div>
+    <div class="g2"><div class="card pad"><div class="uppr mb">Meta x realizado (mês)</div><div class="between" style="align-items:flex-end"><b style="font-size:22px">${BRL(fatMes)}</b><span class="muted" style="font-size:13px">Meta ${BRL(meta)} · ${metaPct.toFixed(0)}%</span></div><div style="height:10px;border-radius:999px;background:#f1f5f9;overflow:hidden;margin-top:10px"><div style="height:100%;background:var(--teal);width:${metaPct}%"></div></div></div>
+    <div class="card pad"><div class="between mb"><div class="uppr">Fluxo previsto (30 dias)</div><b>${BRL(prox30)}</b></div>${proxList||'<div class="faint" style="font-size:13px">Sem vencimentos nos próximos 30 dias.</div>'}</div></div>`;
+}
+function finReceber(canBaixa){
+  const insts=allInstallments().filter(i=>i.status!=="cancelado").sort((a,b)=>a.due.localeCompare(b.due));
+  const rows=insts.map(i=>{const st=instStatus(i);return `<tr><td>${esc(i.patient.name)}</td><td class="muted">${esc(i.patient.treatment||"")}</td><td>${esc(i.n)}</td><td class="right" style="font-weight:600">${BRL(i.value)}</td><td>${fmtDate(i.due)}</td><td><span class="badge t-${SITTONE[st]}">${st}</span></td><td class="muted">${esc(i.method||"—")}</td><td class="right">${i.status==="pago"?`<span class="faint" style="font-size:12px">${fmtDate(i.paidDate)} · ${esc(i.baixaBy||"")}</span>`:(canBaixa?`<button class="btn btn-sm btn-emerald" data-act="baixa" data-id="${i.pid}" data-v="${i.id}">${svg("check",13)} Dar baixa</button>`:'<span class="faint" style="font-size:11px">—</span>')}</td></tr>`;}).join("");
+  return `<div class="card"><table><thead><tr><th>Cliente</th><th>Serviço</th><th>Parcela</th><th class="right">Valor</th><th>Vencimento</th><th>Situação</th><th>Forma</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="8"><div class="empty">Nenhuma parcela. Feche um contrato no Pipeline para gerar o parcelamento automaticamente.</div></td></tr>'}</tbody></table></div>`;
+}
+function finInadimplencia(){
+  const map={};
+  allInstallments().forEach(i=>{if(instStatus(i)==="atrasado"){const k=i.pid;map[k]=map[k]||{p:i.patient,valor:0,dias:0,items:0};map[k].valor+=i.value;map[k].items++;const d=Math.floor((Date.now()-new Date(i.due).getTime())/86400000);if(d>map[k].dias)map[k].dias=d;}});
+  const rows=Object.values(map).map(x=>{const c=(x.p.contract&&x.p.contract.cobrancas)||[];const phone=(x.p.phone||"").replace(/\D/g,"");return `<tr><td>${esc(x.p.name)}</td><td class="right" style="color:var(--rose);font-weight:600">${BRL(x.valor)}</td><td>${x.dias} dias</td><td>${x.items} parc.</td><td>${c.length}</td><td class="muted">${c[0]?esc(c[0].at):"—"}</td><td class="right"><div class="row" style="gap:4px;justify-content:flex-end">${phone?`<a class="btn btn-sm" href="https://wa.me/55${phone}?text=${encodeURIComponent("Olá "+x.p.name+", consta um valor em aberto de "+BRL(x.valor)+". Podemos regularizar?")}" target="_blank" rel="noopener">WhatsApp</a>`:""}<button class="btn btn-sm" data-act="cobrar" data-id="${x.p.id}">Registrar cobrança</button></div></td></tr>`;}).join("");
+  return `<div class="card"><table><thead><tr><th>Cliente</th><th class="right">Valor devido</th><th>Atraso</th><th>Parcelas</th><th>Cobranças</th><th>Último contato</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="7"><div class="empty">Nenhum cliente em atraso.</div></td></tr>'}</tbody></table></div>`;
+}
+function finLancamentos(){
+  const fin=state.finance,ent=fin.filter(x=>x.type==="in").reduce((s,x)=>s+x.value,0),sai=fin.filter(x=>x.type==="out").reduce((s,x)=>s+x.value,0);
+  const rows=fin.map(x=>`<tr><td><span class="row" style="gap:8px"><span class="dot ${x.type==='in'?'d-emerald':'d-rose'}"></span>${esc(x.desc)}</span></td><td class="muted">${esc(x.author||"")}</td><td class="muted">${x.date}</td><td class="right" style="font-weight:600;color:${x.type==='in'?'var(--emerald)':'var(--rose)'}">${x.type==='in'?'+':'−'}${BRL(x.value)}</td><td class="right"><button class="iconbtn" style="color:#cbd5e1" data-act="del-finance" data-id="${x.id}">${svg("trash",15)}</button></td></tr>`).join("");
+  return `<div class="kpis mb" style="grid-template-columns:repeat(3,1fr)">${kpi("Entradas",BRL(ent))}${kpi("Saídas",BRL(sai))}${kpi("Saldo",BRL(ent-sai))}</div><div class="card"><table><thead><tr><th>Descrição</th><th>Autor</th><th>Data</th><th class="right">Valor</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="5"><div class="empty">Nenhum lançamento.</div></td></tr>'}</tbody></table></div>`;
+}
+
+/* ===== AUDITORIA ===== */
+function auditView(){
+  const rows=state.audit.map(a=>`<div class="row" style="gap:12px;padding:11px 14px;border-bottom:1px solid #f1f5f9"><span class="dot ${a.critical?'d-rose':'d-slate'}"></span><div style="flex:1"><div style="${a.critical?'color:var(--rose);font-weight:600':''}">${esc(a.action)}</div><small class="faint">${esc(a.who)} · ${esc(a.at)}</small></div>${a.critical?'<span class="badge t-rose">crítico</span>':''}</div>`).join("");
+  return `<div class="mb"><h2 class="h2">Auditoria</h2><p class="sub">Log completo do sistema</p></div><div class="card">${rows}</div>`;
+}
+
+/* ===== ORTHOCLUB ===== */
+function orthoView(){
+  const members=state.patients.filter(p=>{ensurePatient(p);return p.club.active;});
+  const receitaRec=members.filter(m=>m.club.status==="Ativo").reduce((s,m)=>s+(+m.club.mensalidade||0),0);
+  const recebidas=members.reduce((s,m)=>s+(m.club.pagamentos||[]).reduce((a,x)=>a+x.value,0),0);
+  const atrasadas=members.filter(m=>m.club.status==="Em atraso").reduce((s,m)=>s+(+m.club.mensalidade||0),0);
+  const limpPend=members.filter(m=>benefit(m.club.limpeza,4).available).length;
+  const benUsed=members.reduce((s,m)=>s+(m.club.limpeza.uses||0)+(m.club.extracao.uses||0),0);
+  const novos=members.filter(m=>monthsSince(m.club.dataEntrada)===0).length;
+  const cards=members.map(p=>{const c=p.club;return `<div class="card pad clk" data-act="open-ortho" data-id="${p.id}" style="cursor:pointer"><div class="between"><div class="row"><div class="av" style="background:var(--emerald)">${initials(p.name)}</div><div><div style="font-weight:600">${esc(p.name)}</div><div class="faint" style="font-size:12px">${esc(c.ortodontista||"—")}</div></div></div><span class="badge t-${c.status==='Ativo'?'emerald':c.status==='Em atraso'?'amber':'rose'}">${c.status}</span></div><div class="between" style="margin-top:10px;font-size:13px"><span>${BRL(c.mensalidade)}/mês</span><span class="faint">${c.proxVencimento?fmtDate(c.proxVencimento):"sem data"}</span></div><div class="between" style="margin-top:6px;font-size:12px;color:var(--faint)"><span>Próx. manut. ${fmtDate(c.proxManutencao)}</span><span>Benef. ${(c.limpeza.uses||0)+(c.extracao.uses||0)}</span></div></div>`;}).join("");
+  return `<div class="between mb"><div><h2 class="h2">OrthoClub</h2><p class="sub">Plano de assinatura · clique no card para abrir a ficha</p></div><button class="btn btn-primary" data-act="new-ortho">${svg("plus",16)} Novo membro</button></div>
+    <div class="card pad gold mb"><div class="uppr" style="color:#fff8e1">Receita recorrente OrthoClub</div><div style="font-size:28px;font-weight:700">${BRL(receitaRec)} <span style="font-size:14px;font-weight:500">/mês</span></div><div style="font-size:12px;opacity:.9">${members.length} membros · benefícios usados: ${benUsed}</div></div>
+    <div class="kpis mb" style="grid-template-columns:repeat(3,1fr)">${kpi("Membros ativos",members.filter(m=>m.club.status==='Ativo').length)}${kpi("Novos membros",novos)}${kpi("Mensalidades recebidas",BRL(recebidas))}${kpi("Mensalidades atrasadas",BRL(atrasadas))}${kpi("Limpezas pendentes",limpPend)}${kpi("Benefícios utilizados",benUsed)}</div>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr)">${cards||'<div class="card"><div class="empty">Nenhum membro no OrthoClub. Use "Novo membro" ou ative o plano na ficha de um paciente.</div></div>'}</div>`;
+}
+
+/* ===== MODAIS ===== */
+function modal(title,body,foot,sm){closeModal();document.body.insertAdjacentHTML("beforeend",`<div class="scrim center"><div class="modal ${sm?'sm':''}" data-stop><div class="mhead"><h3>${title}</h3><button class="iconbtn" style="color:#94a3b8" data-act="close-modal">${svg("x",18)}</button></div><div class="mbody">${body}</div>${foot?`<div class="mfoot">${foot}</div>`:""}</div></div>`);}
+function closeModal(){const m=$(".scrim.center");if(m)m.remove();}
+function userSelect(id,sel){return `<select class="input" id="${id}">${state.users.filter(u=>u.active).map(u=>`<option value="${u.id}" ${u.id===sel?"selected":""}>${esc(u.name.split(" ")[0])}</option>`).join("")}</select>`;}
+let masterPending=null;const MASTER="1234";
+function requireMaster(label,cb){masterPending=cb;modal("Confirmação de segurança",`<div class="row" style="gap:8px;align-items:flex-start"><span style="color:var(--rose);margin-top:2px">${svg("lock",16)}</span><p class="muted" style="margin:0">A ação <b>${label}</b> exige a senha mestre. Fica registrada na auditoria.</p></div><input class="input" id="master-pw" type="password" placeholder="Senha mestre" style="margin-top:12px"><p id="master-err" style="color:var(--rose);font-size:12px;margin:6px 0 0;display:none">Senha incorreta.</p>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-danger" data-act="master-ok">Confirmar</button>`,true);setTimeout(()=>$("#master-pw")?.focus(),30);}
+function goalsModal(){const S=state.settings;modal("Metas & custos",`<div class="g2"><div class="field"><label class="label">Meta de faturamento (R$)</label><input class="input" id="g-fat" type="number" value="${S.metaFaturamento}"></div><div class="field"><label class="label">Meta de pacientes</label><input class="input" id="g-pac" type="number" value="${S.metaPacientes}"></div><div class="field"><label class="label">Investimento (R$)</label><input class="input" id="g-inv" type="number" value="${S.investimento}"></div><div class="field"><label class="label">Custo por lead (R$)</label><input class="input" id="g-cl" type="number" value="${S.custoLead}" placeholder="0 = automático"></div><div class="field"><label class="label">Custo por agendamento (R$)</label><input class="input" id="g-ca" type="number" value="${S.custoAgendamento}"></div><div class="field"><label class="label">Custo por venda (R$)</label><input class="input" id="g-cv" type="number" value="${S.custoVenda}"></div></div><p class="faint" style="font-size:12px;margin:0">Custos em 0 são calculados automaticamente.</p>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-goals">Salvar</button>`);}
+function patientModal(){modal("Novo lead",`<div class="g2"><div class="field" style="grid-column:1/3"><label class="label">Nome</label><input class="input" id="np-name"></div><div class="field" style="grid-column:1/3"><label class="label">Telefone</label><input class="input" id="np-phone"></div><div class="field"><label class="label">Origem</label><select class="input" id="np-origin">${ORIGINS.map(o=>`<option>${o}</option>`).join("")}</select></div><div class="field"><label class="label">Tratamento</label><select class="input" id="np-treat">${TREATMENTS.map(o=>`<option>${o}</option>`).join("")}</select></div><div class="field"><label class="label">Responsável</label>${userSelect("np-owner",session.id)}</div><div class="field"><label class="label">Valor estimado</label><input class="input" id="np-est" type="number"></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-patient">Criar lead</button>`);}
+function eventModal(){modal("Novo agendamento",`<div class="g2"><div class="field"><label class="label">Data</label><input class="input" id="ne-date" type="date" value="${todayISO()}"></div><div class="field"><label class="label">Hora</label><input class="input" id="ne-time" type="time" value="09:00"></div><div class="field"><label class="label">Tipo</label><select class="input" id="ne-type">${["Consulta","Avaliação","Retorno","Compromisso"].map(o=>`<option>${o}</option>`).join("")}</select></div><div class="field"><label class="label">Responsável</label>${userSelect("ne-owner",session.id)}</div><div class="field" style="grid-column:1/3"><label class="label">Paciente</label><select class="input" id="ne-pat"><option value="">Selecione</option>${state.patients.map(p=>`<option>${esc(p.name)}</option>`).join("")}</select></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-event">Agendar</button>`);}
+function taskModal(){modal("Nova tarefa",`<div class="field"><label class="label">Título</label><input class="input" id="nt-title"></div><div class="g2"><div class="field"><label class="label">Responsável</label>${userSelect("nt-owner",session.id)}</div><div class="field"><label class="label">Prazo</label><input class="input" id="nt-due" type="date" value="${todayISO()}"></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-task">Criar</button>`);}
+function materialModal(){modal("Adicionar material",`<div class="field"><label class="label">Título</label><input class="input" id="nm-title"></div><div class="g2"><div class="field"><label class="label">Tipo</label><select class="input" id="nm-type"><option value="link">Link</option><option value="video">Vídeo</option><option value="pdf">PDF</option></select></div><div class="field"><label class="label">URL</label><input class="input" id="nm-url" placeholder="https://"></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-material">Adicionar</button>`);}
+function financeModal(){modal("Novo lançamento",`<div class="g2"><div class="field"><label class="label">Tipo</label><select class="input" id="nf-type"><option value="in">Entrada</option><option value="out">Saída</option></select></div><div class="field"><label class="label">Data</label><input class="input" id="nf-date" type="date" value="${todayISO()}"></div><div class="field" style="grid-column:1/3"><label class="label">Descrição</label><input class="input" id="nf-desc"></div><div class="field" style="grid-column:1/3"><label class="label">Valor</label><input class="input" id="nf-val" type="number"></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-finance">Lançar</button>`);}
+function userModal(editId){const u=editId?state.users.find(x=>x.id===editId):null;const roleOpts=Object.keys(state.roles).map(r=>`<option ${u&&u.role===r?"selected":""}>${r}</option>`).join("");const custom=u?(u.permissions!==null&&u.permissions!==undefined):false;const permChecks=MODULES.map(m=>{const on=u&&u.permissions?u.permissions.includes(m.id):false;return `<label class="checkrow"><input type="checkbox" class="uperm" value="${m.id}" ${on?"checked":""} ${custom?"":"disabled"}>${m.label}</label>`;}).join("");modal(editId?"Editar colaborador":"Novo colaborador",`<div class="g2"><div class="field" style="grid-column:1/3"><label class="label">Nome</label><input class="input" id="nu-name" value="${u?esc(u.name):""}"></div><div class="field" style="grid-column:1/3"><label class="label">E-mail</label><input class="input" id="nu-email" value="${u?esc(u.email):""}"></div><div class="field"><label class="label">Senha</label><input class="input" id="nu-pass" value="${u?esc(u.password):"123"}"></div><div class="field"><label class="label">Cargo</label><select class="input" id="nu-role">${roleOpts}</select></div><div class="field"><label class="label">Comissão %</label><input class="input" id="nu-comm" type="number" value="${u?u.commission||0:0}"></div></div><label class="checkrow" style="margin-bottom:10px"><input type="checkbox" id="nu-custom" ${custom?"checked":""} data-act="toggle-custom"> Personalizar permissões deste usuário</label><div class="checkgrid">${permChecks}</div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-user" data-id="${editId||""}">Salvar</button>`);}
+function roleModal(editName){const r=editName?state.roles[editName]:{permissions:[]};const checks=MODULES.map(m=>`<label class="checkrow"><input type="checkbox" class="rperm" value="${m.id}" ${r.permissions.includes(m.id)?"checked":""}>${m.label}</label>`).join("");modal(editName?"Editar cargo":"Novo cargo",`<div class="field"><label class="label">Nome do cargo</label><input class="input" id="nr-name" value="${editName?esc(editName):""}" ${editName?"disabled":""}></div><div class="uppr mb">Permissões de acesso</div><div class="checkgrid">${checks}</div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-role" data-id="${editName||""}">Salvar</button>`);}
+function retornoModal(pid){modal("Agendar retorno",`<div class="g2"><div class="field"><label class="label">Data</label><input class="input" id="rt-date" type="date" value="${todayISO()}"></div><div class="field"><label class="label">Hora</label><input class="input" id="rt-time" type="time" value="09:00"></div><div class="field" style="grid-column:1/3"><label class="label">Tipo</label><select class="input" id="rt-type">${["Retorno","Manutenção","Avaliação","Reavaliação"].map(o=>`<option>${o}</option>`).join("")}</select></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-retorno" data-id="${pid}">Agendar</button>`,true);}
+function payModal(pid){const p=state.patients.find(x=>x.id===pid);modal("Registrar pagamento",`<div class="g2"><div class="field"><label class="label">Data</label><input class="input" id="pay-date" type="date" value="${todayISO()}"></div><div class="field"><label class="label">Valor (R$)</label><input class="input" id="pay-val" type="number" value="${p.club.mensalidade||0}"></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-emerald" data-act="save-pay" data-id="${pid}">Registrar</button>`,true);}
+function closeDealModal(pid){const p=state.patients.find(x=>x.id===pid);if(!p)return;const isOrtho=!!(p.club&&p.club.active);modal("Marcar cliente como fechado",`<p class="muted" style="margin:0 0 12px">Ao confirmar, <b>${esc(p.name)}</b> sai do Pipeline e vai para a aba <b>Clientes</b>. O contrato e o parcelamento entram automaticamente em <b>Financeiro › A Receber</b>.</p><div id="cd-contract-wrap" style="display:${isOrtho?"none":"block"}"><div class="field"><label class="label">Valor do contrato (R$)</label><input class="input" id="cd-val" type="number" value="${+p.estimate||0}"></div><div class="g2"><div class="field"><label class="label">Forma de pagamento</label><select class="input" id="cd-method">${["Pix","Cartão","Boleto","Dinheiro","Transferência"].map(o=>`<option>${o}</option>`).join("")}</select></div><div class="field"><label class="label">Nº de parcelas</label><input class="input" id="cd-parc" type="number" value="1" min="1"></div><div class="field"><label class="label">Valor da entrada (R$)</label><input class="input" id="cd-entrada" type="number" value="0"></div><div class="field"><label class="label">1ª parcela / vencimento</label><input class="input" id="cd-first" type="date" value="${todayISO()}"></div><div class="field" style="grid-column:1/3"><label class="label">CPF / CNPJ</label><input class="input" id="cd-cpf" placeholder="000.000.000-00"></div></div></div><label class="checkrow" style="margin-bottom:10px"><input type="checkbox" id="cd-ortho" ${isOrtho?"checked":""}> É cliente OrthoClub (também cria na aba OrthoClub)</label><div class="field" id="cd-mens-wrap" style="display:${isOrtho?"block":"none"}"><label class="label">Mensalidade OrthoClub (R$)</label><input class="input" id="cd-mens" type="number" value="${p.club?p.club.mensalidade||0:0}"></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-emerald" data-act="save-close" data-id="${pid}">${svg("check",14)} Confirmar fechamento</button>`);}
+function orthoMemberModal(){modal("Novo membro OrthoClub",`<div class="g2"><div class="field" style="grid-column:1/3"><label class="label">Nome</label><input class="input" id="om-name"></div><div class="field"><label class="label">Telefone</label><input class="input" id="om-phone"></div><div class="field"><label class="label">Mensalidade (R$)</label><input class="input" id="om-mens" type="number" value="0"></div><div class="field"><label class="label">Ortodontista</label><input class="input" id="om-orto" placeholder="Dra. ..."></div><div class="field"><label class="label">Data de entrada</label><input class="input" id="om-data" type="date" value="${todayISO()}"></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-ortho-member">Criar membro</button>`);}
+
+/* ===== ACTIONS ===== */
+function pushHist(p,text,type){(p.history=p.history||[]).unshift({id:uid(),at:stamp(),who:session.name,text,type:type||"log"});}
+function pushClub(p,text){(p.club.history=p.club.history||[]).unshift({id:uid(),at:stamp(),text});}
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-act]");if(!t)return;const act=t.dataset.act,id=t.dataset.id;
+  switch(act){
+    case"login":{const email=$("#lg-email").value.trim(),pw=$("#lg-pass").value;const u=state.users.find(x=>x.email===email&&x.password===pw);const err=$("#lg-err");if(!u){err.style.display="block";err.textContent="E-mail ou senha inválidos.";return;}if(!u.active){err.style.display="block";err.textContent="Usuário inativo.";return;}session=u;view=effectivePerms(u)[0]||"dashboard";render();break;}
+    case"logout":session=null;openId=null;render();break;
+    case"nav":view=id;openId=null;$(".scrim")?.remove();render();break;
+    case"period":period.mode=(id==="custom")?"custom":id;render();break;
+    case"goals":if(session.role==="Mentor")goalsModal();break;
+    case"save-goals":if(session.role!=="Mentor"){closeModal();break;}commit(s=>{s.settings={metaFaturamento:+$("#g-fat").value||0,metaPacientes:+$("#g-pac").value||0,investimento:+$("#g-inv").value||0,custoLead:+$("#g-cl").value||0,custoAgendamento:+$("#g-ca").value||0,custoVenda:+$("#g-cv").value||0};},{action:"Atualizou metas & custos"});closeModal();break;
+
+    case"new-patient":patientModal();break;
+    case"save-patient":{const name=$("#np-name").value.trim();if(!name)return;const p=ensurePatient({id:uid(),name,phone:$("#np-phone").value.trim(),origin:$("#np-origin").value,treatment:$("#np-treat").value,owner:$("#np-owner").value,estimate:+$("#np-est").value||0,closedValue:0,stage:"lead",daysIn:0,createdAt:todayISO(),history:[{id:uid(),at:stamp(),who:session.name,text:'Lead criado em "Lead Gerado"',type:"etapa"}]});commit(s=>s.patients.unshift(p),{action:`Criou lead ${name}`});closeModal();break;}
+    case"mark-closed":closeDealModal(id);break;
+    case"save-close":{const ortho=$("#cd-ortho").checked;
+      if(ortho){const mens=+($("#cd-mens")?.value||0);commit(s=>{const p=s.patients.find(x=>x.id===id);if(!p)return;ensurePatient(p);p.stage="fechou";p.closedValue=0;p.daysIn=0;p.closedAt=todayISO();p.club.active=true;if(p.treatment!=="OrthoClub")p.treatment="OrthoClub";p.club.mensalidade=mens;if(!(p.club.history||[]).some(h=>/OrthoClub/.test(h.text)))pushClub(p,"Entrou no OrthoClub");pushHist(p,`Fechado no OrthoClub — ${BRL(mens)}/mês`,"close");},{action:`Fechou no OrthoClub — ${BRL(mens)}/mês`});}
+      else{const val=+$("#cd-val").value||0;const c={value:val,method:$("#cd-method").value,parcelas:+$("#cd-parc").value||1,entrada:+$("#cd-entrada").value||0,firstDue:$("#cd-first").value||todayISO(),cpf:$("#cd-cpf").value.trim(),responsavelFin:session.name,createdAt:todayISO()};commit(s=>{const p=s.patients.find(x=>x.id===id);if(!p)return;ensurePatient(p);p.stage="fechou";p.closedValue=val;p.daysIn=0;p.closedAt=todayISO();c.servico=p.treatment;c.installments=genInstallments(c);p.contract=c;pushHist(p,`Contrato gerado — ${BRL(val)} em ${c.parcelas}x (${c.method})`,"close");},{action:`Fechou contrato — ${BRL(val)} em ${+$("#cd-parc").value||1}x`});}
+      closeModal();render();break;}
+    case"fin-tab":finTab=id;render();break;
+    case"baixa":{const iid=t.dataset.v;const p0=state.patients.find(x=>x.id===id);const i0=p0&&p0.contract?p0.contract.installments.find(x=>x.id===iid):null;commit(s=>{const p=s.patients.find(x=>x.id===id);if(!p||!p.contract)return;const inst=p.contract.installments.find(x=>x.id===iid);if(!inst)return;inst.status="pago";inst.paidDate=todayISO();inst.baixaBy=session.name;s.finance.unshift({id:uid(),type:"in",date:todayISO(),desc:`Recebimento ${inst.n} — ${p.name}`,value:inst.value,author:session.name});},{action:`Deu baixa: ${i0?i0.n:""} de ${p0?p0.name:""} (${BRL(i0?i0.value:0)})`});break;}
+    case"cobrar":{commit(s=>{const p=s.patients.find(x=>x.id===id);if(!p)return;p.contract=p.contract||{};(p.contract.cobrancas=p.contract.cobrancas||[]).unshift({at:stamp(),by:session.name});},{action:`Registrou cobrança — ${state.patients.find(x=>x.id===id)?.name||""}`});break;}
+    case"open":openId=id;drawerType="patient";drawerTab="neg";renderActiveDrawer();break;
+    case"open-ortho":{const p=state.patients.find(x=>x.id===id);ensurePatient(p);if(!p.club.active){commit(s=>{const q=s.patients.find(x=>x.id===id);q.club.active=true;q.treatment="OrthoClub";pushClub(q,"Entrou no OrthoClub");},{action:`Ativou OrthoClub para ${p.name}`});}openId=id;drawerType="ortho";drawerTab="ficha";renderActiveDrawer();break;}
+    case"dtab":drawerTab=id;renderActiveDrawer();break;
+    case"close-drawer":openId=null;drawerType=null;$(".scrim:not(.center)")?.remove();render();break;
+    case"set-stage":case"set-owner":break;
+    case"drop-lead":commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){p.owner=null;pushHist(p,"Lead solto (volta para a equipe)","etapa");}},{action:"Soltou um lead"});renderActiveDrawer();break;
+    case"conclude":requireMaster("término de procedimento",()=>{commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){p.situacao="Procedimento concluído";pushHist(p,"Término de procedimento","clinico");}},{action:"Concluiu procedimento de paciente",critical:true});renderActiveDrawer();});break;
+    case"addtag":{const v=$("#tag-input").value.trim();if(!v)return;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){p.tags=p.tags||[];if(!p.tags.includes(v))p.tags.push(v);pushHist(p,"Etiqueta adicionada: "+v,"tag");}if(!s.tags.includes(v))s.tags.push(v);});renderActiveDrawer();break;}
+    case"untag":{const v=t.dataset.v;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p)p.tags=(p.tags||[]).filter(x=>x!==v);});renderActiveDrawer();break;}
+    case"add-indicou":{const v=$("#indicou-input").value.trim();if(!v)return;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){p.indicou=p.indicou||[];if(!p.indicou.includes(v))p.indicou.push(v);}});renderActiveDrawer();break;}
+    case"rm-indicou":{const v=t.dataset.v;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p)p.indicou=(p.indicou||[]).filter(x=>x!==v);});renderActiveDrawer();break;}
+    case"comment":{const v=$("#cmt-input").value.trim();if(!v)return;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){(p.comments=p.comments||[]).unshift({id:uid(),at:stamp(),who:session.name,text:v});pushHist(p,"Comentário adicionado","comentario");}});renderActiveDrawer();break;}
+    case"del-patient":requireMaster("excluir paciente",()=>{const p=state.patients.find(x=>x.id===id);commit(s=>{s.patients=s.patients.filter(x=>x.id!==id);},{action:`EXCLUIU paciente ${p?p.name:""}`,critical:true});openId=null;$(".scrim:not(.center)")?.remove();render();});break;
+    case"add-retorno":retornoModal(id);break;
+    case"save-retorno":{const date=$("#rt-date").value,time=$("#rt-time").value,type=$("#rt-type").value;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){(p.retornos=p.retornos||[]).unshift({id:uid(),date,time,type,at:stamp()});s.events.unshift({id:uid(),date,time,type,patient:p.name,owner:p.owner||session.id});pushHist(p,`${type} agendado para ${fmtDate(date)} ${time}`,"agenda");}});closeModal();renderActiveDrawer();break;}
+
+    /* ortho */
+    case"new-ortho":orthoMemberModal();break;
+    case"save-ortho-member":{const name=$("#om-name").value.trim();if(!name)return;const p=ensurePatient({id:uid(),name,phone:$("#om-phone").value.trim(),origin:"Indicação",treatment:"OrthoClub",owner:session.id,estimate:0,closedValue:0,stage:"fechou",daysIn:0,createdAt:todayISO(),history:[{id:uid(),at:stamp(),who:session.name,text:"Membro OrthoClub criado",type:"etapa"}]});p.club.active=true;p.club.mensalidade=+$("#om-mens").value||0;p.club.ortodontista=$("#om-orto").value.trim();p.club.dataEntrada=$("#om-data").value||todayISO();pushClub(p,"Entrou no OrthoClub");commit(s=>s.patients.unshift(p),{action:`Novo membro OrthoClub: ${name}`});closeModal();break;}
+    case"oc-status":commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){p.club.status=t.dataset.v;pushClub(p,"Status alterado para "+t.dataset.v);}});renderActiveDrawer();break;
+    case"oc-aparelho":commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){p.club.aparelhoInstalado=!p.club.aparelhoInstalado;pushClub(p,p.club.aparelhoInstalado?"Aparelho instalado":"Aparelho removido");}});renderActiveDrawer();break;
+    case"oc-pot":commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){const arr=p.club.potencial;const v=t.dataset.v;const i=arr.indexOf(v);if(i>=0)arr.splice(i,1);else arr.push(v);}});renderActiveDrawer();break;
+    case"oc-pay":payModal(id);break;
+    case"save-pay":{const date=$("#pay-date").value,val=+$("#pay-val").value||0;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){(p.club.pagamentos=p.club.pagamentos||[]).unshift({date,value:val});p.club.proxVencimento=addMonths(date,1);pushClub(p,`Pagamento registrado — ${BRL(val)}`);s.finance.unshift({id:uid(),type:"in",date,desc:`Mensalidade OrthoClub — ${p.name}`,value:val,author:session.name});}},{action:`Mensalidade OrthoClub — ${BRL(val)}`});closeModal();renderActiveDrawer();break;}
+    case"oc-manut":commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){const d=todayISO();(p.club.manutencoes=p.club.manutencoes||[]).unshift({date:d});p.club.ultimaManutencao=d;p.club.proxManutencao=addMonths(d,1);pushClub(p,"Manutenção registrada");}});renderActiveDrawer();break;
+    case"oc-benefit":{const k=t.dataset.v;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){const b=p.club[k];b.ultima=todayISO();b.uses=(b.uses||0)+1;pushClub(p,(k==="limpeza"?"Limpeza":"Extração")+" utilizada");}},{action:"Benefício OrthoClub utilizado"});renderActiveDrawer();break;}
+    case"oc-contato":{const v=$("#contato-input").value.trim();if(!v)return;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){(p.club.contatos=p.club.contatos||[]).unshift({text:v,at:stamp()});pushClub(p,"Contato registrado: "+v);}});renderActiveDrawer();break;}
+
+    case"new-event":eventModal();break;
+    case"save-event":{const pat=$("#ne-pat").value;if(!pat)return;const ev={id:uid(),date:$("#ne-date").value,time:$("#ne-time").value,type:$("#ne-type").value,patient:pat,owner:$("#ne-owner").value};commit(s=>{s.events.unshift(ev);const p=s.patients.find(x=>x.name===pat);if(p)pushHist(p,`Agendado: ${ev.type} em ${ev.date} ${ev.time}`,"agenda");});closeModal();break;}
+    case"new-task":taskModal();break;
+    case"save-task":{const title=$("#nt-title").value.trim();if(!title)return;commit(s=>s.tasks.unshift({id:uid(),title,owner:$("#nt-owner").value,due:$("#nt-due").value,status:"aberta"}));closeModal();break;}
+    case"toggle-task":commit(s=>{const x=s.tasks.find(t=>t.id===id);if(x)x.status=x.status==="aberta"?"concluída":"aberta";});break;
+    case"new-material":materialModal();break;
+    case"save-material":{const title=$("#nm-title").value.trim(),url=$("#nm-url").value.trim();if(!title||!url)return;commit(s=>s.materials.unshift({id:uid(),title,url,type:$("#nm-type").value,at:stamp()}),{action:`Adicionou material: ${title}`});closeModal();break;}
+    case"del-material":requireMaster("excluir material",()=>{const m=state.materials.find(x=>x.id===id);commit(s=>{s.materials=s.materials.filter(x=>x.id!==id);},{action:`EXCLUIU material: ${m?m.title:""}`,critical:true});});break;
+    case"new-finance":financeModal();break;
+    case"save-finance":{const desc=$("#nf-desc").value.trim(),val=+$("#nf-val").value;if(!desc||!val)return;commit(s=>s.finance.unshift({id:uid(),type:$("#nf-type").value,date:$("#nf-date").value,desc,value:val,author:session.name}),{action:`Lançamento: ${desc} (${BRL(val)})`});closeModal();break;}
+    case"del-finance":requireMaster("excluir lançamento financeiro",()=>{const f=state.finance.find(x=>x.id===id);commit(s=>{s.finance=s.finance.filter(x=>x.id!==id);},{action:`EXCLUIU lançamento: ${f?f.desc:""} (${BRL(f?f.value:0)})`,critical:true});});break;
+    case"team-tab":teamTab=id;render();break;
+    case"new-user":userModal(null);break;
+    case"edit-user":userModal(id);break;
+    case"toggle-custom":document.querySelectorAll(".uperm").forEach(c=>c.disabled=!t.checked);break;
+    case"save-user":{const name=$("#nu-name").value.trim(),email=$("#nu-email").value.trim();if(!name||!email)return;const custom=$("#nu-custom").checked;const perms=custom?Array.from(document.querySelectorAll(".uperm:checked")).map(c=>c.value):null;const data={name,email,password:$("#nu-pass").value,role:$("#nu-role").value,commission:+$("#nu-comm").value||0,permissions:perms};commit(s=>{if(id){const u=s.users.find(x=>x.id===id);Object.assign(u,data);}else{s.users.unshift({id:uid(),active:true,...data});}},{action:id?`Editou colaborador ${name}`:`Cadastrou colaborador ${name}`});closeModal();break;}
+    case"toggle-user":commit(s=>{const u=s.users.find(x=>x.id===id);if(u)u.active=!u.active;});break;
+    case"new-role":roleModal(null);break;
+    case"edit-role":roleModal(id);break;
+    case"save-role":{const name=id||$("#nr-name").value.trim();if(!name)return;const perms=Array.from(document.querySelectorAll(".rperm:checked")).map(c=>c.value);commit(s=>{const builtin=s.roles[name]?s.roles[name].builtin:false;s.roles[name]={permissions:perms,builtin};},{action:id?`Editou cargo ${name}`:`Criou cargo ${name}`});closeModal();break;}
+    case"del-role":requireMaster("excluir cargo",()=>{commit(s=>{delete s.roles[id];},{action:`EXCLUIU cargo ${id}`,critical:true});});break;
+    case"master-ok":{const pw=$("#master-pw").value;if(pw!==MASTER){$("#master-err").style.display="block";return;}const cb=masterPending;masterPending=null;closeModal();if(cb)cb();break;}
+    case"close-modal":closeModal();break;
+  }
+});
+
+/* scrim background click */
+document.addEventListener("click",e=>{if(e.target.classList&&e.target.classList.contains("scrim")){if(e.target.classList.contains("center"))closeModal();else{openId=null;drawerType=null;e.target.remove();render();}}});
+
+/* change handlers: generic data-field + stage/owner + period dates */
+document.addEventListener("change",e=>{
+  if(e.target.id==="cd-ortho"){const on=e.target.checked;const mw=$("#cd-mens-wrap");if(mw)mw.style.display=on?"block":"none";const cw=$("#cd-contract-wrap");if(cw)cw.style.display=on?"none":"block";return;}
+  const fld=e.target.closest("[data-field]");
+  if(fld&&openId){const field=fld.dataset.field;const val=fld.type==="checkbox"?fld.checked:(fld.type==="number"?(+fld.value||0):fld.value);const log=fld.dataset.log;
+    commit(s=>{const p=s.patients.find(x=>x.id===openId);if(!p)return;ensurePatient(p);
+      if(field==="closedValue"){p.closedValue=val;}
+      else setDeep(p,field,val);
+      if(log)pushHist(p,log,"edit");
+    });renderActiveDrawer();return;}
+  const t=e.target.closest("[data-act]");if(!t)return;const id=t.dataset.id;
+  if(t.dataset.act==="set-stage"){const v=t.value;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){const old=stage(p.stage).label;p.stage=v;p.daysIn=0;if(v==="fechou")p.closedAt=todayISO();pushHist(p,`Etapa: ${old} → ${stage(v).label}`,"etapa");if(v==="fechou"&&!p.financeBooked&&(+p.closedValue>0)){p.financeBooked=true;s.finance.unshift({id:uid(),type:"in",date:todayISO(),desc:`Fechamento — ${p.name} (${p.treatment})`,value:+p.closedValue,author:session.name});}}},{action:`Moveu paciente para ${stage(v).label}`});renderActiveDrawer();}
+  if(t.dataset.act==="set-owner"){const v=t.value;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){p.owner=v||null;pushHist(p,v?"Responsável alterado":"Lead solto (volta para a equipe)","etapa");}},{action:"Alterou responsável"});renderActiveDrawer();}
+  if(t.dataset.act==="period-date"){period.from=$("#pf-from")?.value||period.from;period.to=$("#pf-to")?.value||period.to;render();}
+});
+
+/* drag & drop */
+let dragId=null;
+document.addEventListener("dragstart",e=>{const c=e.target.closest("[data-drag]");if(c){dragId=c.dataset.drag;e.dataTransfer.effectAllowed="move";}});
+document.addEventListener("dragover",e=>{const d=e.target.closest(".drop");if(d){e.preventDefault();d.classList.add("over");}});
+document.addEventListener("dragleave",e=>{const d=e.target.closest(".drop");if(d)d.classList.remove("over");});
+document.addEventListener("drop",e=>{const d=e.target.closest("[data-drop]");if(!d||!dragId)return;e.preventDefault();const sid=d.dataset.drop,pid=dragId;dragId=null;commit(s=>{const p=s.patients.find(x=>x.id===pid);if(p&&p.stage!==sid){const old=stage(p.stage).label;p.stage=sid;p.daysIn=0;if(sid==="fechou")p.closedAt=todayISO();pushHist(p,`Etapa: ${old} → ${stage(sid).label}`,"etapa");if(sid==="fechou"&&!p.financeBooked&&(+p.closedValue>0)){p.financeBooked=true;s.finance.unshift({id:uid(),type:"in",date:todayISO(),desc:`Fechamento — ${p.name} (${p.treatment})`,value:+p.closedValue,author:session.name});}}},{action:`Moveu paciente para ${stage(sid).label}`});});
+
+/* keyboard */
+document.addEventListener("keydown",e=>{if(e.key!=="Enter")return;const id=e.target.id;if($("#lg-email")&&(id==="lg-email"||id==="lg-pass"))document.querySelector('[data-act="login"]').click();if(id==="cmt-input")document.querySelector('[data-act="comment"]')?.click();if(id==="tag-input")document.querySelector('[data-act="addtag"]')?.click();if(id==="indicou-input")document.querySelector('[data-act="add-indicou"]')?.click();if(id==="contato-input")document.querySelector('[data-act="oc-contato"]')?.click();if(id==="master-pw")document.querySelector('[data-act="master-ok"]')?.click();});
+window.addEventListener("online",()=>setSync("saved"));window.addEventListener("offline",()=>setSync("offline"));
+(async function boot(){if(USE_FIREBASE){try{await initFirebase();}catch(e){console.error("Firebase falhou, usando localStorage",e);}}render();})();
+</script>
+</body>
+</html>
