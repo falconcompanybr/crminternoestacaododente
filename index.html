@@ -220,6 +220,7 @@ function commit(mut,audit){mut(state);if(audit)state.audit.unshift({id:uid(),at:
 const effectivePerms=u=>(u.permissions!==null&&u.permissions!==undefined)?u.permissions:(state.roles[u.role]?.permissions||[]);
 const can=m=>session&&effectivePerms(session).includes(m);
 const isMentorLevel=()=>session&&(session.role==="CEO"||session.role==="Mentor");
+const canEditMaterials=()=>session&&session.role==="Mentor";
 const canManageRoles=()=>session&&["CEO","Mentor","Gestor"].includes(session.role);
 const canDelete=()=>session&&(session.role==="CEO"||effectivePerms(session).includes("delete_data"));
 
@@ -457,8 +458,8 @@ function tasksView(){
 /* ===== MATERIAIS ===== */
 function materialsView(){
   const kind={link:"link",video:"video",pdf:"pdf"};
-  const cards=state.materials.map(m=>`<div class="card pad" style="display:flex;align-items:flex-start;gap:12px"><div style="color:var(--teal-d);margin-top:2px">${svg(kind[m.type]||"link",20)}</div><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(m.title)}</div><a href="${esc(m.url)}" target="_blank" rel="noopener" style="font-size:12px;word-break:break-all">${esc(m.url)}</a><div class="faint" style="font-size:11px;margin-top:3px">${esc(m.type.toUpperCase())} · ${esc(m.at)}</div></div>${isMentorLevel()?`<button class="iconbtn" style="color:#cbd5e1" data-act="del-material" data-id="${m.id}">${svg("trash",16)}</button>`:""}</div>`).join("");
-  return `<div class="between mb"><div><h2 class="h2">Materiais da Mentoria</h2><p class="sub">Links, vídeos e PDFs ${isMentorLevel()?"· você pode gerenciar":"· somente leitura"}</p></div>${isMentorLevel()?`<button class="btn btn-primary" data-act="new-material">${svg("plus",16)} Adicionar material</button>`:""}</div><div class="grid" style="grid-template-columns:repeat(2,1fr)">${cards||'<div class="card"><div class="empty">Nenhum material ainda.</div></div>'}</div>`;
+  const cards=state.materials.map(m=>`<div class="card pad" style="display:flex;align-items:flex-start;gap:12px"><div style="color:var(--teal-d);margin-top:2px">${svg(kind[m.type]||"link",20)}</div><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(m.title)}</div><a href="${esc(m.url)}" target="_blank" rel="noopener" style="font-size:12px;word-break:break-all">${esc(m.url)}</a><div class="faint" style="font-size:11px;margin-top:3px">${esc(m.type.toUpperCase())} · ${esc(m.at)}</div></div>${canEditMaterials()?`<button class="iconbtn" style="color:#cbd5e1" data-act="del-material" data-id="${m.id}">${svg("trash",16)}</button>`:""}</div>`).join("");
+  return `<div class="between mb"><div><h2 class="h2">Materiais da Mentoria</h2><p class="sub">Links, vídeos e PDFs ${canEditMaterials()?"· você pode gerenciar":"· somente leitura"}</p></div>${canEditMaterials()?`<button class="btn btn-primary" data-act="new-material">${svg("plus",16)} Adicionar material</button>`:""}</div><div class="grid" style="grid-template-columns:repeat(2,1fr)">${cards||'<div class="card"><div class="empty">Nenhum material ainda.</div></div>'}</div>`;
 }
 
 /* ===== EQUIPE / CARGOS ===== */
@@ -638,9 +639,9 @@ document.addEventListener("click",e=>{
 case"open-task":taskDetailModal(id);break;
 case"task-comment":{const v=$("#task-cmt-input").value.trim();if(!v)return;commit(s=>{const tk=s.tasks.find(x=>x.id===id);if(tk)(tk.comments=tk.comments||[]).unshift({id:uid(),at:stamp(),who:session.name,text:v});});taskDetailModal(id);break;}
     case"del-task":requireMaster("excluir tarefa",()=>{const tk=state.tasks.find(x=>x.id===id);commit(s=>{s.tasks=s.tasks.filter(x=>x.id!==id);},{action:`EXCLUIU tarefa: ${tk?tk.title:""}`,critical:true});closeModal();});break;
-    case"new-material":materialModal();break;
-    case"save-material":{const title=$("#nm-title").value.trim(),url=$("#nm-url").value.trim();if(!title||!url)return;commit(s=>s.materials.unshift({id:uid(),title,url,type:$("#nm-type").value,at:stamp()}),{action:`Adicionou material: ${title}`});closeModal();break;}
-    case"del-material":requireMaster("excluir material",()=>{const m=state.materials.find(x=>x.id===id);commit(s=>{s.materials=s.materials.filter(x=>x.id!==id);},{action:`EXCLUIU material: ${m?m.title:""}`,critical:true});});break;
+    case"new-material":if(!canEditMaterials())break;materialModal();break;
+    case"save-material":{if(!canEditMaterials())break;const title=$("#nm-title").value.trim(),url=$("#nm-url").value.trim();if(!title||!url)return;commit(s=>s.materials.unshift({id:uid(),title,url,type:$("#nm-type").value,at:stamp()}),{action:`Adicionou material: ${title}`});closeModal();break;}
+    case"del-material":if(!canEditMaterials())break;requireMaster("excluir material",()=>{const m=state.materials.find(x=>x.id===id);commit(s=>{s.materials=s.materials.filter(x=>x.id!==id);},{action:`EXCLUIU material: ${m?m.title:""}`,critical:true});});break;
     case"new-finance":financeModal();break;
     case"save-finance":{const desc=$("#nf-desc").value.trim(),val=+$("#nf-val").value;if(!desc||!val)return;commit(s=>s.finance.unshift({id:uid(),type:$("#nf-type").value,date:$("#nf-date").value,desc,value:val,author:session.name}),{action:`Lançamento: ${desc} (${BRL(val)})`});closeModal();break;}
     case"del-finance":requireMaster("excluir lançamento financeiro",()=>{const f=state.finance.find(x=>x.id===id);commit(s=>{s.finance=s.finance.filter(x=>x.id!==id);},{action:`EXCLUIU lançamento: ${f?f.desc:""} (${BRL(f?f.value:0)})`,critical:true});});break;
