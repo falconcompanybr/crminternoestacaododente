@@ -71,7 +71,7 @@
   .lead .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9;font-size:12px;color:var(--faint)}
   .scrim{position:fixed;inset:0;background:rgba(15,23,42,.42);backdrop-filter:blur(2px);z-index:40;display:flex;justify-content:flex-end}
   .scrim.center{align-items:center;justify-content:center;padding:16px}
-  .drawer{width:460px;max-width:100%;background:#fff;height:100%;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.12)}
+  .drawer{width:540px;max-width:100%;background:#fff;height:100%;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.12)}
   .dhead{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:14px 18px;z-index:2}
   .dtabs{display:flex;gap:18px;padding:0 18px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:64px;z-index:2}
   .dtab{border:0;background:transparent;padding:11px 0;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
@@ -194,7 +194,7 @@ function seedState(){return{
 };}
 
 /* defaults for new clinical/ortho fields */
-function blankClub(){return{active:false,dataEntrada:todayISO(),status:"Ativo",mensalidade:0,adesao:0,valorManutencao:0,formaPagamento:"Boleto Integrada",pagamentos:[],parcelas:[],proxVencimento:null,aparelhoInstalado:false,ortodontista:"",ultimaManutencao:null,proxManutencao:null,manutencoes:[],limpeza:{ultima:null,uses:0},extracao:{ultima:null,uses:0},contatos:[],potencial:[],obs:"",history:[]};}
+function blankClub(){return{active:false,dataEntrada:todayISO(),status:"Ativo",mensalidade:29.90,adesao:0,valorManutencao:0,formaPagamento:"Boleto Integrada",pagamentos:[],parcelas:[],proxVencimento:null,aparelhoInstalado:false,ortodontista:"",ultimaManutencao:null,proxManutencao:null,manutencoes:[],limpeza:{ultima:null,uses:0},extracao:{ultima:null,uses:0},contatos:[],potencial:[],obs:"",history:[]};}
 function ensurePatient(p){
   p.tags=p.tags||[];p.comments=p.comments||[];p.history=p.history||[];p.evolution=p.evolution||{};
   p.indicadoPor=p.indicadoPor||"";p.indicou=p.indicou||[];p.retornos=p.retornos||[];p.situacao=p.situacao||"";
@@ -208,7 +208,8 @@ function calcAge(iso){if(!iso)return null;const b=new Date(iso+"T00:00"),n=new D
 function genClientCode(){let c,g=0;do{c=String(Math.floor(100000+Math.random()*900000));g++;}while(state.patients.some(p=>p.code===c)&&g<80);return c;}
 function genClubParcelas(club){const list=[];const base=club.dataEntrada||todayISO();if(+club.adesao>0)list.push({id:uid(),n:"Adesão plano",value:+club.adesao,due:base,status:"pendente",method:club.formaPagamento||"Dinheiro",paidDate:null,baixaBy:null});const v=Math.round((+club.mensalidade||0)*100)/100;for(let i=1;i<=12;i++)list.push({id:uid(),n:i+"/12",value:v,due:addMonths(base,i),status:"pendente",method:club.formaPagamento||"Boleto Integrada",paidDate:null,baixaBy:null});return list;}
 function clubParcStatus(i){if(i.status==="pago")return"pago";if(i.status==="cancelado")return"cancelado";return i.due<todayISO()?"atrasado":"a vencer";}
-function ensureClubParcelas(p){ensurePatient(p);if(p.club.active){if(!p.code)p.code=genClientCode();if((!p.club.parcelas||!p.club.parcelas.length)&&(+p.club.mensalidade>0||+p.club.adesao>0))p.club.parcelas=genClubParcelas(p.club);}}
+function ensureClubParcelas(p){ensurePatient(p);if(p.club.active){if(!p.code)p.code=genClientCode();if(+p.club.mensalidade<=0)p.club.mensalidade=29.90;const parc=p.club.parcelas||[];const monthly=parc.filter(x=>x.n!=="Adesão plano");const nonePaid=!parc.some(x=>x.status==="pago");const allZero=monthly.length>0&&monthly.every(x=>(+x.value||0)===0);if((!parc.length||(nonePaid&&allZero))&&(+p.club.mensalidade>0||+p.club.adesao>0))p.club.parcelas=genClubParcelas(p.club);}}
+function daysOverdue(due){if(!due)return 0;return Math.max(0,Math.floor((Date.now()-new Date(due+"T00:00").getTime())/86400000));}
 function setupClubMember(p){ensurePatient(p);p.club.active=true;if(!p.code)p.code=genClientCode();if(!p.club.dataEntrada)p.club.dataEntrada=todayISO();if((!p.club.parcelas||!p.club.parcelas.length)&&(+p.club.mensalidade>0||+p.club.adesao>0))p.club.parcelas=genClubParcelas(p.club);const nx=(p.club.parcelas||[]).find(x=>x.status!=="pago");p.club.proxVencimento=nx?nx.due:(p.club.proxVencimento||null);}
 function manutDoneThisMonth(club){const ym=todayISO().slice(0,7);return (club.manutencoes||[]).some(m=>(m.date||"").slice(0,7)===ym&&m.status!=="cancelado");}
 function clubRecebidoPlano(club){return (club.parcelas||[]).filter(x=>x.status==="pago").reduce((s,x)=>s+(+x.value||0),0);}
@@ -411,10 +412,9 @@ function orthoDrawer(p){
     const h=(c.history||[]).map(x=>`<li><span class="pin"></span><p>${esc(x.text)}</p><small>${esc(x.at)}</small></li>`).join("");
     body=h?`<ul class="tl">${h}</ul>`:`<div class="empty">Nenhum movimento ainda. Pagamentos, manutenções, benefícios e contatos aparecem aqui automaticamente.</div>`;
   } else if(drawerTab==="financeiro"){
-    const rows=parc.map(x=>{const st=clubParcStatus(x);const red=st==="atrasado";return `<tr style="${red?'background:#fff1f2':''}">
+    const rows=parc.map(x=>{const st=clubParcStatus(x);const red=st==="atrasado";const od=red?daysOverdue(x.due):0;return `<tr style="${red?'background:#fff1f2':''}">
       <td style="${red?'color:var(--rose)':''}">${fmtDate(x.due)}</td>
-      <td style="${red?'color:var(--rose);font-weight:600':''}">${esc(x.n)}</td>
-      <td><span class="badge t-slate">${esc(x.method||"—")}</span></td>
+      <td style="${red?'color:var(--rose)':''}"><div style="font-weight:600">${esc(x.n)}</div>${red?`<div class="faint" style="color:var(--rose);font-size:11px">${od} dia${od===1?'':'s'} em atraso</div>`:''}</td>
       <td class="right" style="font-weight:600;${red?'color:var(--rose)':''}">${BRL(x.value)}</td>
       <td class="right">${x.status==="pago"?`<span class="badge t-emerald"><span class="dot d-emerald"></span>${fmtDate(x.paidDate)}</span>`:`<button class="btn btn-sm ${red?'btn-danger':'btn-emerald'}" data-act="oc-baixa" data-id="${p.id}" data-v="${x.id}">RECEBER</button>`}</td></tr>`;}).join("");
     body=`
@@ -424,16 +424,16 @@ function orthoDrawer(p){
         <div><div class="uppr" style="color:var(--rose)">A receber do plano</div><div style="font-size:20px;font-weight:700;color:var(--rose)">${BRL(aReceber)}</div><div style="height:3px;background:var(--rose);border-radius:3px;margin-top:5px"></div></div>
         ${atrasado?`<div><div class="uppr" style="color:var(--amber)">Em atraso</div><div style="font-size:20px;font-weight:700;color:var(--amber)">${BRL(atrasado)}</div></div>`:""}
       </div>
-      <div class="g2"><div class="field"><label class="label">Data de entrada</label><input class="input" type="date" data-field="club.dataEntrada" value="${c.dataEntrada||todayISO()}"></div><div class="field"><label class="label">Forma de pagamento</label><input class="input" data-field="club.formaPagamento" value="${esc(c.formaPagamento||"")}"></div><div class="field"><label class="label">Mensalidade (R$)</label><input class="input" type="number" data-field="club.mensalidade" value="${c.mensalidade||0}"></div><div class="field"><label class="label">Adesão (R$)</label><input class="input" type="number" data-field="club.adesao" value="${c.adesao||0}"></div></div>
+      <div class="g2"><div class="field"><label class="label">Data de entrada</label><input class="input" type="date" data-field="club.dataEntrada" value="${c.dataEntrada||todayISO()}"></div><div class="field"><label class="label">Forma de pagamento</label><input class="input" data-field="club.formaPagamento" value="${esc(c.formaPagamento||"")}"></div><div class="field"><label class="label">Mensalidade (R$) <span class="faint">(fixa do plano)</span></label><input class="input" type="number" value="${c.mensalidade||0}" disabled style="font-weight:600;color:var(--ink)"></div><div class="field"><label class="label">Adesão (R$)</label><input class="input" type="number" data-field="club.adesao" value="${c.adesao||0}"></div></div>
       <div class="alertbox mb">${svg("star",13)} Aqui você cobra <b>somente o plano</b>. Parcelas vencidas e não pagas ficam em <b style="color:var(--rose)">vermelho</b>. Clique em <b>RECEBER</b> para registrar o recebimento do plano — entra no Financeiro geral.</div>
-      ${parc.length?`<div class="card" style="overflow:hidden"><table><thead><tr><th>Vencimento</th><th>Parcela</th><th>Forma</th><th class="right">Valor</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="empty">Nenhuma parcela gerada ainda.<br><button class="btn btn-sm btn-primary" style="margin-top:10px" data-act="oc-genparc" data-id="${p.id}">Gerar 12 parcelas</button></div>`}
+      ${parc.length?`<div class="card" style="overflow:hidden"><table><thead><tr><th>Vencimento</th><th>Parcela</th><th class="right">Valor</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="empty">Nenhuma parcela gerada ainda.<br><button class="btn btn-sm btn-primary" style="margin-top:10px" data-act="oc-genparc" data-id="${p.id}">Gerar 12 parcelas</button></div>`}
       <div class="faint" style="font-size:11px;margin-top:8px">Próximo vencimento do plano: ${c.proxVencimento?fmtDate(c.proxVencimento):"—"}</div>
       <div class="sep"></div>
       <div class="uppr mb">${svg("gift",13)} Manutenção <span class="faint">(paga por consulta — sem atraso)</span></div>
-      <div class="row mb" style="gap:30px">
+      <div class="row mb" style="gap:24px;flex-wrap:wrap">
         <div><div class="uppr" style="color:var(--emerald)">Manutenção recebida</div><div style="font-size:20px;font-weight:700;color:var(--emerald)">${BRL(clubRecebidoManut(c))}</div></div>
         <div><div class="uppr">Valor por consulta</div><div style="font-size:20px;font-weight:700">${BRL(c.valorManutencao)}</div></div>
-        <div><div class="uppr">Este mês</div><div style="margin-top:4px">${manutDoneThisMonth(c)?'<span class="badge t-emerald">Paga</span>':'<span class="badge t-slate">Ainda não veio</span>'}</div></div>
+        <div><div class="uppr">Este mês</div><div style="margin-top:4px">${manutDoneThisMonth(c)?'<span class="badge t-emerald">Pago</span>':'<span class="badge t-slate">Em aberto</span>'}</div></div>
       </div>
       <div class="alertbox mb" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af">${svg("star",13)} A manutenção é registrada na aba <b>Ficha</b>, no botão <b>Registrar manutenção</b>, quando o paciente comparece. Não é cobrada aqui e nunca fica em atraso.</div>`;
   } else {
