@@ -111,6 +111,27 @@
   .login .card2{background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
   .login h1{color:#fff;text-align:center;font-size:24px;margin:10px 0 2px}.login h1 span{color:#8cc8f4}
   .login .lead2{color:#94a3b8;text-align:center;font-size:13px;margin:0 0 20px}.hint{font-size:12px;color:#94a3b8;text-align:center;margin-top:14px}
+  /* agenda calendário */
+  .cal{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .cal-grid{display:grid}
+  .cal-head{border-bottom:1px solid var(--line)}
+  .cal-corner{border-right:1px solid var(--line)}
+  .cal-colhead{padding:7px 4px;text-align:center;border-right:1px solid var(--line)}
+  .cal-colhead:last-child{border-right:0}
+  .cal-colhead-today{background:var(--teal-l)}
+  .cal-dn{font-size:12px;color:var(--muted);text-transform:capitalize}
+  .cal-dd{font-size:15px;font-weight:600;line-height:1.2}
+  .cal-scroll{max-height:620px;overflow-y:auto}
+  .cal-gutter{border-right:1px solid var(--line)}
+  .cal-hr{height:48px;font-size:11px;color:var(--faint);text-align:right;padding:2px 6px 0 0;box-sizing:border-box}
+  .cal-col{position:relative;border-right:1px solid var(--line)}
+  .cal-col:last-child{border-right:0}
+  .cal-col-today{background:#f0f9ff}
+  .cal-cell{height:48px;border-top:1px solid #f1f5f9;cursor:pointer}
+  .cal-cell:hover{background:rgba(14,136,214,.07)}
+  .cal-ev{position:absolute;border-radius:6px;color:#fff;font-size:11px;line-height:1.15;padding:2px 5px;overflow:hidden;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+  .cal-ev:hover{filter:brightness(1.06);z-index:6}
+  .cal-ev b{font-weight:700}
 </style>
 </head>
 <body>
@@ -230,6 +251,8 @@ let session=null,view="dashboard",openId=null,drawerType=null,drawerTab="neg",te
 let period={mode:"geral",from:todayISO(),to:todayISO()};
 let orthoBusca="";
 let orthoMes=new Date().toISOString().slice(0,7);
+let agendaMode="semana";
+let agendaData=todayISO();
 function commit(mut,audit){mut(state);if(audit)state.audit.unshift({id:uid(),at:stamp(),who:session?session.name:"Sistema",...audit});persist();render();}
 const effectivePerms=u=>(u.permissions!==null&&u.permissions!==undefined)?u.permissions:(state.roles[u.role]?.permissions||[]);
 const can=m=>session&&effectivePerms(session).includes(m);
@@ -334,11 +357,36 @@ function clientsView(){
 }
 
 /* ===== PACIENTES (todos) ===== */
-function patientsView(){
-  const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name.split(" ")[0]:"—";};
-  const rows=state.patients.map(p=>{const t=stage(p.stage);return `<tr class="clk" data-act="open" data-id="${p.id}"><td><div class="row"><div class="av sm">${initials(p.name)}</div><div><div style="font-weight:600">${esc(p.name)} ${p.club&&p.club.active?'<span class="badge t-emerald">OrthoClub</span>':''}</div><div class="faint" style="font-size:12px">${esc(p.phone||"")}</div></div></div></td><td class="muted">${esc(p.treatment||"")}</td><td><span class="badge t-slate">${esc(p.origin||"—")}</span></td><td><span class="badge t-${t.tone}">${t.label}</span></td><td class="muted">${p.owner?on(p.owner):'—'}</td><td class="right" style="font-weight:600">${BRL(p.closedValue||p.estimate)}</td></tr>`;}).join("");
-  return `<div class="between mb"><div><h2 class="h2">Pacientes & Leads</h2><p class="sub">${state.patients.length} registros</p></div><button class="btn btn-primary" data-act="new-patient">${svg("plus",16)} Novo lead</button></div>
-    <div class="card"><table><thead><tr><th>Paciente</th><th>Tratamento</th><th>Origem</th><th>Etapa</th><th>Responsável</th><th class="right">Valor</th></tr></thead><tbody>${rows||'<tr><td colspan="6"><div class="empty">Nenhum paciente ainda. Crie o primeiro lead.</div></td></tr>'}</tbody></table></div>`;
+/* ===== AGENDA (calendário) ===== */
+function agendaView(){
+  const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name.split(" ")[0]:"Equipe";};
+  const START=8,END=20,HOURPX=48;const hours=[];for(let h=START;h<END;h++)hours.push(h);const total=(END-START)*HOURPX;
+  const toMin=t=>{const p=(t||"09:00").split(":").map(Number);return p[0]*60+(p[1]||0);};
+  const anchor=agendaData||todayISO();let cols=[],days=[];
+  if(agendaMode==="dia"){const de=state.events.filter(e=>e.date===anchor);let owners=[...new Set(de.map(e=>e.owner||""))];if(!owners.length)owners=[session.id||""];cols=owners.map(o=>({date:anchor,owner:o,top:"",big:o?on(o):"Equipe"}));}
+  else{const d=new Date(anchor+"T00:00");const off=(d.getDay()+6)%7;d.setDate(d.getDate()-off);const dn=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];for(let i=0;i<7;i++){const dt=new Date(d.getFullYear(),d.getMonth(),d.getDate()+i).toISOString().slice(0,10);days.push(dt);cols.push({date:dt,owner:null,top:dn[i],big:new Date(dt+"T00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})});}}
+  const n=cols.length;
+  const tone=ty=>({"Consulta":"sky","Avaliação":"violet","Retorno":"emerald","Manutenção":"emerald","Compromisso":"amber","Reavaliação":"indigo"}[ty]||"slate");
+  const colorOf=ty=>({sky:"#0ea5e9",violet:"#8b5cf6",emerald:"#10b981",amber:"#f59e0b",indigo:"#6366f1",slate:"#94a3b8"}[tone(ty)]);
+  const gutter=`<div class="cal-gutter">${hours.map(h=>`<div class="cal-hr">${String(h).padStart(2,"0")}h00</div>`).join("")}</div>`;
+  const colHtml=cols.map(col=>{
+    let evs=state.events.filter(e=>e.date===col.date&&(agendaMode==="semana"||(e.owner||"")===col.owner));
+    let items=evs.map(e=>{const s=toMin(e.time);const dur=+e.dur||30;return {e,s,en:s+dur};});packEvents(items);
+    const blocks=items.map(it=>{const top=Math.max(0,(it.s-START*60)/60*HOURPX);const hgt=Math.max(16,(it.en-it.s)/60*HOURPX-2);const w=100/(it._lanes||1);const left=(it._lane||0)*w;const c=colorOf(it.e.type);
+      return `<div class="cal-ev" style="top:${top}px;height:${hgt}px;left:calc(${left}% + 2px);width:calc(${w}% - 4px);background:${c}" data-act="cal-open" data-id="${it.e.id}" title="${esc(it.e.patient)} · ${esc(it.e.type)} ${esc(it.e.time)}"><b>${esc(it.e.time)}</b> ${esc(it.e.patient)}</div>`;}).join("");
+    const cells=hours.map(h=>`<div class="cal-cell" data-act="cal-new" data-date="${col.date}" data-time="${String(h).padStart(2,"0")}:00"${col.owner!=null?` data-owner="${col.owner}"`:""}></div>`).join("");
+    return `<div class="cal-col${col.date===todayISO()?" cal-col-today":""}">${cells}${blocks}</div>`;
+  }).join("");
+  const headHtml=cols.map(col=>`<div class="cal-colhead${col.date===todayISO()?" cal-colhead-today":""}"><div class="cal-dn">${esc(col.top)}</div><div class="cal-dd">${esc(col.big)}</div></div>`).join("");
+  const periodLabel=agendaMode==="dia"?new Date(anchor+"T00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}):(new Date(days[0]+"T00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short"})+" – "+new Date(days[6]+"T00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"}));
+  return `<div class="between mb"><div><h2 class="h2">Agenda</h2><p class="sub" style="text-transform:capitalize">${periodLabel}</p></div><button class="btn btn-primary" data-act="new-event">${svg("plus",16)} Agendar</button></div>
+    <div class="between mb" style="flex-wrap:wrap;gap:8px">
+      <div class="row" style="gap:6px"><button class="btn btn-sm" data-act="ag-hoje">Hoje</button><button class="btn btn-sm" data-act="ag-prev" title="Anterior">‹</button><button class="btn btn-sm" data-act="ag-next" title="Próximo">›</button><input type="date" class="input" style="width:auto" value="${anchor}" data-act="ag-date"></div>
+      <div class="seg">${[["semana","Semana"],["dia","Dia"]].map(([k,l])=>`<button class="segbtn ${agendaMode===k?'on':''}" data-act="ag-mode" data-id="${k}">${l}</button>`).join("")}</div>
+    </div>
+    <div class="cal"><div class="cal-grid cal-head" style="grid-template-columns:56px repeat(${n},minmax(0,1fr))"><div class="cal-corner"></div>${headHtml}</div>
+    <div class="cal-scroll"><div class="cal-grid" style="grid-template-columns:56px repeat(${n},minmax(0,1fr));height:${total}px">${gutter}${colHtml}</div></div></div>
+    <p class="faint" style="font-size:12px;margin-top:8px">Clique num horário vazio para agendar · clique num bloco para ver/excluir. Cores: <span style="color:#0ea5e9">●</span> Consulta · <span style="color:#8b5cf6">●</span> Avaliação · <span style="color:#10b981">●</span> Retorno/Manutenção · <span style="color:#f59e0b">●</span> Compromisso</p>`;
 }
 
 /* ===== DRAWER dispatcher ===== */
@@ -487,20 +535,18 @@ function benefitCard(p,key,title,sub,b){
 }
 
 /* ===== AGENDA ===== */
-function agendaView(){
-  const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name.split(" ")[0]:"—";};
-  const g={};state.events.forEach(e=>{(g[e.date]=g[e.date]||[]).push(e);});
-  const blocks=Object.keys(g).sort().map(date=>{const d=new Date(date+"T00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
-    const items=g[date].sort((a,b)=>a.time.localeCompare(b.time)).map(e=>`<div class="card" style="padding:11px;display:flex;align-items:center;gap:12px;margin-bottom:8px"><div style="width:52px;text-align:center;font-weight:600;color:var(--teal-d)">${e.time}</div><div style="width:1px;height:30px;background:#f1f5f9"></div><div style="flex:1"><div style="font-weight:600">${esc(e.patient)}</div><div class="faint" style="font-size:12px">${esc(e.type)}</div></div><span class="badge t-slate">${on(e.owner)}</span></div>`).join("");
-    return `<div class="mb"><div class="muted mb" style="font-size:13px;text-transform:capitalize">${d}</div>${items}</div>`;}).join("");
-  return `<div class="between mb"><div><h2 class="h2">Agenda</h2><p class="sub">Consultas, avaliações e retornos</p></div><button class="btn btn-primary" data-act="new-event">${svg("plus",16)} Agendar</button></div>${blocks||'<div class="card"><div class="empty">Nenhum agendamento.</div></div>'}`;
-}
-
-/* ===== TAREFAS ===== */
-function tasksView(){
-  const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name.split(" ")[0]:"—";};
-  const rows=state.tasks.map(t=>{const nc=(t.comments||[]).length;return `<div class="row" style="gap:12px;padding:11px 14px;border-bottom:1px solid #f1f5f9"><button class="iconbtn" style="border:1px solid ${t.status==='concluída'?'var(--teal)':'#cbd5e1'};background:${t.status==='concluída'?'var(--teal)':'#fff'};color:#fff;height:22px;width:22px" data-act="toggle-task" data-id="${t.id}">${t.status==='concluída'?svg("tasks",12):""}</button><div style="flex:1;cursor:pointer" data-act="open-task" data-id="${t.id}"><div style="${t.status==='concluída'?'text-decoration:line-through;color:#94a3b8':''}">${esc(t.title)}</div><small class="faint">Direcionada a ${on(t.owner)} · criada por ${esc(t.createdBy||"—")} · vence ${t.due}${nc?` · ${nc} comentário${nc>1?"s":""}`:""}</small></div><span class="badge t-${t.status==='concluída'?'emerald':'amber'}">${t.status}</span></div>`;}).join("");
-  return `<div class="between mb"><div><h2 class="h2">Tarefas</h2><p class="sub">Organização da equipe · clique na tarefa para comentar</p></div><button class="btn btn-primary" data-act="new-task">${svg("plus",16)} Nova tarefa</button></div><div class="card">${rows||'<div class="empty">Nenhuma tarefa.</div>'}</div>`;
+function packEvents(items){
+  items.sort((a,b)=>a.s-b.s||a.en-b.en);
+  let cluster=[],clusterEnd=-1,lanes=[];
+  const flush=()=>{if(!cluster.length)return;const total=lanes.length;cluster.forEach(x=>x._lanes=total);cluster=[];lanes=[];clusterEnd=-1;};
+  for(const it of items){
+    if(cluster.length&&it.s>=clusterEnd)flush();
+    let placed=false;
+    for(let i=0;i<lanes.length;i++){if(it.s>=lanes[i]){it._lane=i;lanes[i]=it.en;placed=true;break;}}
+    if(!placed){it._lane=lanes.length;lanes.push(it.en);}
+    cluster.push(it);clusterEnd=Math.max(clusterEnd,it.en);
+  }
+  flush();return items;
 }
 
 /* ===== MATERIAIS ===== */
@@ -631,7 +677,8 @@ let masterPending=null;const MASTER="valescaejorge";
 function requireMaster(label,cb){masterPending=cb;modal("Confirmação de segurança",`<div class="row" style="gap:8px;align-items:flex-start"><span style="color:var(--rose);margin-top:2px">${svg("lock",16)}</span><p class="muted" style="margin:0">A ação <b>${label}</b> exige a senha mestre. Fica registrada na auditoria.</p></div><input class="input" id="master-pw" type="password" placeholder="Senha mestre" style="margin-top:12px"><p id="master-err" style="color:var(--rose);font-size:12px;margin:6px 0 0;display:none">Senha incorreta.</p>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-danger" data-act="master-ok">Confirmar</button>`,true);setTimeout(()=>$("#master-pw")?.focus(),30);}
 function goalsModal(ym){ym=ym||new Date().toISOString().slice(0,7);const S=metaMes(ym);const mesLabel=new Date(ym+"-01T00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});modal("Metas & custos",`<div class="field"><label class="label">Mês desta meta</label><input class="input" id="g-mes" type="month" value="${ym}"><p class="faint" style="font-size:11px;margin:4px 0 0">Cada mês tem a sua própria meta. Editando: <b style="text-transform:capitalize">${mesLabel}</b></p></div><div class="g2"><div class="field"><label class="label">Meta de faturamento (R$)</label><input class="input" id="g-fat" type="number" value="${S.metaFaturamento||0}"></div><div class="field"><label class="label">Meta de pacientes</label><input class="input" id="g-pac" type="number" value="${S.metaPacientes||0}"></div><div class="field"><label class="label">Investimento (R$)</label><input class="input" id="g-inv" type="number" value="${S.investimento||0}"></div><div class="field"><label class="label">Custo por lead (R$)</label><input class="input" id="g-cl" type="number" value="${S.custoLead||0}" placeholder="0 = automático"></div><div class="field"><label class="label">Custo por agendamento (R$)</label><input class="input" id="g-ca" type="number" value="${S.custoAgendamento||0}"></div><div class="field"><label class="label">Custo por venda (R$)</label><input class="input" id="g-cv" type="number" value="${S.custoVenda||0}"></div></div><p class="faint" style="font-size:12px;margin:0">Custos em 0 são calculados automaticamente.</p>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-goals">Salvar</button>`);}
 function patientModal(){modal("Novo lead",`<div class="g2"><div class="field" style="grid-column:1/3"><label class="label">Nome</label><input class="input" id="np-name"></div><div class="field" style="grid-column:1/3"><label class="label">Telefone</label><input class="input" id="np-phone"></div><div class="field"><label class="label">Origem</label><select class="input" id="np-origin">${ORIGINS.map(o=>`<option>${o}</option>`).join("")}</select></div><div class="field"><label class="label">Tratamento</label><select class="input" id="np-treat">${TREATMENTS.map(o=>`<option>${o}</option>`).join("")}</select></div><div class="field"><label class="label">Responsável</label>${userSelect("np-owner",session.id)}</div><div class="field"><label class="label">Valor estimado</label><input class="input" id="np-est" type="number"></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-patient">Criar lead</button>`);}
-function eventModal(){modal("Novo agendamento",`<div class="g2"><div class="field"><label class="label">Data</label><input class="input" id="ne-date" type="date" value="${todayISO()}"></div><div class="field"><label class="label">Hora</label><input class="input" id="ne-time" type="time" value="09:00"></div><div class="field"><label class="label">Tipo</label><select class="input" id="ne-type">${["Consulta","Avaliação","Retorno","Compromisso"].map(o=>`<option>${o}</option>`).join("")}</select></div><div class="field"><label class="label">Responsável</label>${userSelect("ne-owner",session.id)}</div><div class="field" style="grid-column:1/3"><label class="label">Paciente</label><select class="input" id="ne-pat"><option value="">Selecione</option>${state.patients.map(p=>`<option>${esc(p.name)}</option>`).join("")}</select></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-event">Agendar</button>`);}
+function eventModal(pre){pre=pre||{};modal("Novo agendamento",`<div class="g2"><div class="field"><label class="label">Data</label><input class="input" id="ne-date" type="date" value="${pre.date||todayISO()}"></div><div class="field"><label class="label">Hora</label><input class="input" id="ne-time" type="time" value="${pre.time||"09:00"}"></div><div class="field"><label class="label">Duração</label><select class="input" id="ne-dur"><option value="15">15 min</option><option value="30" selected>30 min</option><option value="45">45 min</option><option value="60">1 hora</option></select></div><div class="field"><label class="label">Tipo</label><select class="input" id="ne-type">${["Consulta","Avaliação","Retorno","Compromisso"].map(o=>`<option>${o}</option>`).join("")}</select></div><div class="field"><label class="label">Responsável</label>${userSelect("ne-owner",pre.owner||session.id)}</div><div class="field"><label class="label">Paciente</label><select class="input" id="ne-pat"><option value="">Selecione</option>${state.patients.map(p=>`<option>${esc(p.name)}</option>`).join("")}</select></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-event">Agendar</button>`);}
+function eventDetailModal(eid){const e=state.events.find(x=>x.id===eid);if(!e)return;const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name:"Equipe";};const pat=state.patients.find(p=>p.name===e.patient);modal("Agendamento",`<div class="g2"><div><div class="uppr">Paciente</div><div style="font-weight:600">${esc(e.patient)}</div></div><div><div class="uppr">Tipo</div><div>${esc(e.type)}</div></div><div><div class="uppr">Data</div><div>${fmtDate(e.date)}</div></div><div><div class="uppr">Hora</div><div>${esc(e.time)} · ${+e.dur||30} min</div></div><div><div class="uppr">Responsável</div><div>${esc(on(e.owner))}</div></div></div>`,`<button class="btn btn-danger" data-act="del-event" data-id="${e.id}">${svg("trash",13)} Excluir</button>${pat?`<button class="btn" data-act="open-patient-byname" data-v="${esc(e.patient)}">Abrir paciente</button>`:""}<button class="btn btn-ghost" data-act="close-modal">Fechar</button>`);}
 function taskModal(){modal("Nova tarefa",`<div class="field"><label class="label">Título</label><input class="input" id="nt-title"></div><div class="g2"><div class="field"><label class="label">Direcionar para</label>${userSelect("nt-owner",session.id)}</div><div class="field"><label class="label">Prazo</label><input class="input" id="nt-due" type="date" value="${todayISO()}"></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-task">Criar</button>`);}
 function taskDetailModal(tid){const t=state.tasks.find(x=>x.id===tid);if(!t)return;const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name:"—";};const cmts=(t.comments||[]).map(c=>`<div class="card pad" style="padding:9px 11px;margin-bottom:6px"><div>${esc(c.text)}</div><small class="faint">${esc(c.who)} · ${esc(c.at)}</small></div>`).join("");modal("Tarefa",`<div class="field"><div class="uppr">Título</div><div style="font-weight:600;font-size:15px">${esc(t.title)}</div></div><div class="g2"><div><div class="uppr">Direcionada para</div><div>${esc(on(t.owner))}</div></div><div><div class="uppr">Prazo</div><div>${t.due?fmtDate(t.due):"—"}</div></div></div><div class="g2 mt"><div><div class="uppr">Criada por</div><div>${esc(t.createdBy||"—")} ${t.createdAt?`<span class="faint">· ${esc(t.createdAt)}</span>`:""}</div></div><div><div class="uppr">Status</div><div><span class="badge t-${t.status==='concluída'?'emerald':'amber'}">${t.status}</span></div></div></div><div class="sep"></div><div class="uppr mb">Comentários</div><div class="row" style="gap:8px;margin-bottom:10px"><input class="input" id="task-cmt-input" placeholder="Escrever comentário…"><button class="btn btn-primary btn-sm" data-act="task-comment" data-id="${t.id}">Enviar</button></div>${cmts||'<div class="faint" style="font-size:13px">Nenhum comentário ainda.</div>'}`,`${canDelete()?`<button class="btn btn-danger" data-act="del-task" data-id="${t.id}">${svg("trash",13)} Excluir</button>`:""}<button class="btn btn-ghost" data-act="close-modal">Fechar</button><button class="btn ${t.status==='concluída'?'':'btn-emerald'}" data-act="toggle-task" data-id="${t.id}">${t.status==='concluída'?'Reabrir':svg("check",13)+' Concluir'}</button>`);}
 function materialModal(){modal("Adicionar material",`<div class="field"><label class="label">Título</label><input class="input" id="nm-title"></div><div class="g2"><div class="field"><label class="label">Tipo</label><select class="input" id="nm-type"><option value="link">Link</option><option value="video">Vídeo</option><option value="pdf">PDF</option></select></div><div class="field"><label class="label">URL</label><input class="input" id="nm-url" placeholder="https://"></div></div>`,`<button class="btn btn-ghost" data-act="close-modal">Cancelar</button><button class="btn btn-primary" data-act="save-material">Adicionar</button>`);}
@@ -698,7 +745,15 @@ document.addEventListener("click",e=>{
     case"oc-genparc":commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){ensurePatient(p);p.club.parcelas=genClubParcelas(p.club);const nx=(p.club.parcelas||[]).find(x=>x.status!=="pago");p.club.proxVencimento=nx?nx.due:null;pushClub(p,"Parcelas (12x) geradas");}},{action:"Gerou parcelas OrthoClub (12x)"});renderActiveDrawer();break;
 
     case"new-event":eventModal();break;
-    case"save-event":{const pat=$("#ne-pat").value;if(!pat)return;const ev={id:uid(),date:$("#ne-date").value,time:$("#ne-time").value,type:$("#ne-type").value,patient:pat,owner:$("#ne-owner").value};commit(s=>{s.events.unshift(ev);const p=s.patients.find(x=>x.name===pat);if(p)pushHist(p,`Agendado: ${ev.type} em ${ev.date} ${ev.time}`,"agenda");});closeModal();break;}
+    case"save-event":{const pat=$("#ne-pat").value;if(!pat)return;const ev={id:uid(),date:$("#ne-date").value,time:$("#ne-time").value,dur:+$("#ne-dur").value||30,type:$("#ne-type").value,patient:pat,owner:$("#ne-owner").value};commit(s=>{s.events.unshift(ev);const p=s.patients.find(x=>x.name===pat);if(p)pushHist(p,`Agendado: ${ev.type} em ${ev.date} ${ev.time}`,"agenda");});closeModal();break;}
+    case"cal-new":{eventModal({date:t.dataset.date,time:t.dataset.time,owner:t.dataset.owner});break;}
+    case"cal-open":eventDetailModal(id);break;
+    case"del-event":commit(s=>{s.events=s.events.filter(x=>x.id!==id);},{action:"Excluiu agendamento"});closeModal();render();break;
+    case"open-patient-byname":{const p=state.patients.find(x=>x.name===t.dataset.v);if(p){closeModal();openId=p.id;drawerType="patient";drawerTab="age";renderActiveDrawer();}break;}
+    case"ag-hoje":agendaData=todayISO();render();break;
+    case"ag-prev":agendaData=addDays(agendaData||todayISO(),agendaMode==="dia"?-1:-7);render();break;
+    case"ag-next":agendaData=addDays(agendaData||todayISO(),agendaMode==="dia"?1:7);render();break;
+    case"ag-mode":agendaMode=id;render();break;
     case"new-task":taskModal();break;
     case"save-task":{const title=$("#nt-title").value.trim();if(!title)return;commit(s=>s.tasks.unshift({id:uid(),title,owner:$("#nt-owner").value,due:$("#nt-due").value,status:"aberta",createdBy:session.name,createdAt:stamp(),comments:[]}),{action:`Criou tarefa: ${title}`});closeModal();break;}
     case"toggle-task":{const fromModal=!!$(".scrim.center");commit(s=>{const x=s.tasks.find(t=>t.id===id);if(x)x.status=x.status==="aberta"?"concluída":"aberta";});if(fromModal)taskDetailModal(id);break;}
@@ -748,6 +803,7 @@ document.addEventListener("change",e=>{
   if(t.dataset.act==="period-date"){period.from=$("#pf-from")?.value||period.from;period.to=$("#pf-to")?.value||period.to;render();}
   if(t.dataset.act==="ortho-search"){const v=t.value;orthoBusca=v;const cards=document.querySelectorAll('[data-act="open-ortho"]');render();const inp=$("#ortho-busca");if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}}
   if(t.dataset.act==="ortho-mes"){orthoMes=t.value||new Date().toISOString().slice(0,7);render();}
+  if(t.dataset.act==="ag-date"){agendaData=t.value||todayISO();render();}
 });
 
 /* drag & drop */
