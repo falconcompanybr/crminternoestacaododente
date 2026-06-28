@@ -194,13 +194,13 @@ function seedState(){return{
 };}
 
 /* defaults for new clinical/ortho fields */
-function blankClub(){return{active:false,dataEntrada:todayISO(),status:"Ativo",mensalidade:29.90,adesao:0,valorManutencao:0,formaPagamento:"Boleto Integrada",pagamentos:[],parcelas:[],proxVencimento:null,aparelhoInstalado:false,ortodontista:"",ultimaManutencao:null,proxManutencao:null,manutencoes:[],limpeza:{ultima:null,uses:0},extracao:{ultima:null,uses:0},contatos:[],potencial:[],obs:"",history:[]};}
+function blankClub(){return{active:false,dataEntrada:todayISO(),status:"Ativo",mensalidade:29.90,adesao:0,valorManutencao:0,formaPagamento:"Boleto Integrada",pagamentos:[],parcelas:[],proxVencimento:null,aparelhoInstalado:false,ortodontista:"",ultimaManutencao:null,proxManutencao:null,manutencoes:[],limpeza:{ultima:null,uses:0},extracao:{ultima:null,uses:0},contatos:[],potencial:[],obs:"",history:[],beneficiosLog:[]};}
 function ensurePatient(p){
   p.tags=p.tags||[];p.comments=p.comments||[];p.history=p.history||[];p.evolution=p.evolution||{};
   p.indicadoPor=p.indicadoPor||"";p.indicou=p.indicou||[];p.retornos=p.retornos||[];p.situacao=p.situacao||"";
   p.cpf=p.cpf||"";p.birthDate=p.birthDate||"";p.code=p.code||"";
   if(!p.club)p.club=blankClub();
-  if(p.club){p.club.parcelas=p.club.parcelas||[];if(p.club.adesao==null)p.club.adesao=0;if(p.club.valorManutencao==null)p.club.valorManutencao=0;p.club.manutencoes=p.club.manutencoes||[];if(p.club.proxVencimento===undefined)p.club.proxVencimento=null;}
+  if(p.club){p.club.parcelas=p.club.parcelas||[];if(p.club.adesao==null)p.club.adesao=0;if(p.club.valorManutencao==null)p.club.valorManutencao=0;p.club.manutencoes=p.club.manutencoes||[];p.club.beneficiosLog=p.club.beneficiosLog||[];if(p.club.proxVencimento===undefined)p.club.proxVencimento=null;}
   return p;
 }
 function benefit(b,months){if(!b||!b.ultima)return{status:"Disponível",available:true,prox:null};const prox=addMonths(b.ultima,months);const available=new Date()>=new Date(prox);return{status:available?"Disponível":"Utilizado",available,prox};}
@@ -229,6 +229,7 @@ let state=loadLocal()||seedState();
 let session=null,view="dashboard",openId=null,drawerType=null,drawerTab="neg",teamTab="membros",finTab="visao";
 let period={mode:"geral",from:todayISO(),to:todayISO()};
 let orthoBusca="";
+let orthoMes=new Date().toISOString().slice(0,7);
 function commit(mut,audit){mut(state);if(audit)state.audit.unshift({id:uid(),at:stamp(),who:session?session.name:"Sistema",...audit});persist();render();}
 const effectivePerms=u=>(u.permissions!==null&&u.permissions!==undefined)?u.permissions:(state.roles[u.role]?.permissions||[]);
 const can=m=>session&&effectivePerms(session).includes(m);
@@ -602,11 +603,22 @@ function orthoView(){
   const atrasadoPlano=members.reduce((s,m)=>s+(m.club.parcelas||[]).filter(x=>clubParcStatus(x)==="atrasado").reduce((a,x)=>a+(+x.value||0),0),0);
   const recebidoManut=members.reduce((s,m)=>s+clubRecebidoManut(m.club),0);
   const aReceberManut=members.filter(m=>m.club.status==="Ativo"&&!manutDoneThisMonth(m.club)).reduce((s,m)=>s+(+m.club.valorManutencao||0),0);
+  const ym=orthoMes||new Date().toISOString().slice(0,7);const inMes=iso=>!!iso&&iso.slice(0,7)===ym;
+  const mesLabel=new Date(ym+"-01T00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  const comparecimentosMes=allMembers.reduce((s,m)=>s+(m.club.manutencoes||[]).filter(x=>inMes(x.date)&&x.status!=="cancelado").length,0);
+  const novosMes=allMembers.filter(m=>inMes(m.club.dataEntrada)).length;
+  const recManutMes=allMembers.reduce((s,m)=>s+(m.club.manutencoes||[]).filter(x=>inMes(x.date)&&x.status!=="cancelado").reduce((a,x)=>a+(+x.value||0),0),0);
+  const recPlanoMes=allMembers.reduce((s,m)=>s+(m.club.parcelas||[]).filter(x=>x.status==="pago"&&inMes(x.paidDate)).reduce((a,x)=>a+(+x.value||0),0),0);
+  const benefMes=allMembers.reduce((s,m)=>s+(m.club.beneficiosLog||[]).filter(x=>inMes(x.date)).length,0);
   const cards=members.map(p=>{const c=p.club;return `<div class="card pad clk" data-act="open-ortho" data-id="${p.id}" style="cursor:pointer"><div class="between"><div class="row"><div class="av" style="background:var(--emerald)">${initials(p.name)}</div><div><div style="font-weight:600">${esc(p.name)}</div><div class="faint" style="font-size:12px">${esc(c.ortodontista||"—")}</div></div></div><span class="badge t-${c.status==='Ativo'?'emerald':c.status==='Em atraso'?'amber':'rose'}">${c.status}</span></div><div class="between" style="margin-top:10px;font-size:13px"><span>${BRL(c.mensalidade)}/mês</span><span class="faint">${c.proxVencimento?fmtDate(c.proxVencimento):"sem data"}</span></div><div class="between" style="margin-top:6px;font-size:12px;color:var(--faint)"><span>Próx. manut. ${fmtDate(c.proxManutencao)}</span><span>Benef. ${(c.limpeza.uses||0)+(c.extracao.uses||0)}</span></div></div>`;}).join("");
   return `<div class="between mb"><div><h2 class="h2">OrthoClub</h2><p class="sub">Plano de assinatura · clique no card para abrir a ficha</p></div><button class="btn btn-primary" data-act="new-ortho">${svg("plus",16)} Novo membro</button></div>
     <div class="row mb" style="gap:8px;max-width:420px"><span style="color:var(--faint)">${svg("search",16)}</span><input class="input" id="ortho-busca" placeholder="Pesquisar por nome, telefone ou ortodontista…" value="${esc(orthoBusca)}" data-act="ortho-search">${orthoBusca?`<button class="btn btn-sm" data-act="ortho-clear">Limpar</button>`:""}</div>
     ${termo?`<p class="faint mb" style="font-size:12px;margin-top:-6px">${members.length} resultado(s) para "<b>${esc(orthoBusca)}</b>"${members.length===0?" · nenhum membro encontrado":""}</p>`:""}
     <div class="card pad gold mb"><div class="uppr" style="color:#fff8e1">Receita recorrente OrthoClub</div><div style="font-size:28px;font-weight:700">${BRL(receitaRec)} <span style="font-size:14px;font-weight:500">/mês</span></div><div style="font-size:12px;opacity:.9">${members.length} membros · benefícios usados: ${benUsed}</div></div>
+    <div class="card pad mb">
+      <div class="between mb" style="flex-wrap:wrap;gap:8px"><div class="uppr">Resumo do mês — <span style="text-transform:capitalize;color:var(--ink)">${mesLabel}</span></div><div class="row" style="gap:8px"><input type="month" class="input" style="width:auto" id="ortho-mes" value="${ym}" data-act="ortho-mes"><button class="btn btn-sm" data-act="ortho-mes-now">Mês atual</button></div></div>
+      <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${kpi("Foram à clínica",comparecimentosMes,"manutenções no mês")}${kpi("Novos membros",novosMes)}${kpi("Benefícios usados",benefMes)}${kpi("Receita do plano",BRL(recPlanoMes),"recebido no mês")}${kpi("Receita de manutenção",BRL(recManutMes),"recebido no mês")}${kpi("Receita total do mês",BRL(recPlanoMes+recManutMes))}</div>
+    </div>
     <div class="kpis mb" style="grid-template-columns:repeat(4,1fr)">${kpi("A receber do plano",BRL(aReceberPlano),atrasadoPlano?BRL(atrasadoPlano)+" em atraso":"em dia")}${kpi("Recebido do plano",BRL(recebidoPlano))}${kpi("A receber de manutenção",BRL(aReceberManut),"previsto este mês")}${kpi("Manutenção recebida",BRL(recebidoManut))}${kpi("Membros ativos",members.filter(m=>m.club.status==='Ativo').length)}${kpi("Novos membros",novos)}${kpi("Limpezas pendentes",limpPend)}${kpi("Benefícios utilizados",benUsed)}</div>
     <div class="grid" style="grid-template-columns:repeat(2,1fr)">${cards||'<div class="card"><div class="empty">Nenhum membro no OrthoClub. Use "Novo membro" ou ative o plano na ficha de um paciente.</div></div>'}</div>`;
 }
@@ -680,7 +692,7 @@ document.addEventListener("click",e=>{
     case"oc-pay":payModal(id);break;
     case"save-pay":{const date=$("#pay-date").value,val=+$("#pay-val").value||0;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){(p.club.pagamentos=p.club.pagamentos||[]).unshift({date,value:val});p.club.proxVencimento=addMonths(date,1);pushClub(p,`Pagamento registrado — ${BRL(val)}`);s.finance.unshift({id:uid(),type:"in",date,desc:`Mensalidade OrthoClub — ${p.name}`,value:val,author:session.name});}},{action:`Mensalidade OrthoClub — ${BRL(val)}`});closeModal();renderActiveDrawer();break;}
     case"oc-manut":commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){const d=todayISO();const v=+p.club.valorManutencao||0;(p.club.manutencoes=p.club.manutencoes||[]).unshift({id:uid(),date:d,value:v,status:"pago",paidDate:d,by:session.name});p.club.ultimaManutencao=d;p.club.proxManutencao=addMonths(d,1);pushClub(p,`Manutenção realizada e paga — ${BRL(v)}`);if(v>0)s.finance.unshift({id:uid(),type:"in",date:d,desc:`Manutenção OrthoClub — ${p.name}`,value:v,author:session.name});}},{action:"Manutenção OrthoClub paga"});renderActiveDrawer();break;
-    case"oc-benefit":{const k=t.dataset.v;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){const b=p.club[k];b.ultima=todayISO();b.uses=(b.uses||0)+1;pushClub(p,(k==="limpeza"?"Limpeza":"Extração")+" utilizada");}},{action:"Benefício OrthoClub utilizado"});renderActiveDrawer();break;}
+    case"oc-benefit":{const k=t.dataset.v;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){const b=p.club[k];b.ultima=todayISO();b.uses=(b.uses||0)+1;(p.club.beneficiosLog=p.club.beneficiosLog||[]).push({tipo:k,date:todayISO()});pushClub(p,(k==="limpeza"?"Limpeza":"Extração")+" utilizada");}},{action:"Benefício OrthoClub utilizado"});renderActiveDrawer();break;}
     case"oc-contato":{const v=$("#contato-input").value.trim();if(!v)return;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){(p.club.contatos=p.club.contatos||[]).unshift({text:v,at:stamp()});pushClub(p,"Contato registrado: "+v);}});renderActiveDrawer();break;}
     case"oc-baixa":{const iid=t.dataset.v;const p0=state.patients.find(x=>x.id===id);const i0=p0&&p0.club?(p0.club.parcelas||[]).find(x=>x.id===iid):null;commit(s=>{const p=s.patients.find(x=>x.id===id);if(!p||!p.club)return;const inst=(p.club.parcelas||[]).find(x=>x.id===iid);if(!inst)return;inst.status="pago";inst.paidDate=todayISO();inst.baixaBy=session.name;(p.club.pagamentos=p.club.pagamentos||[]).unshift({date:todayISO(),value:inst.value});const nx=(p.club.parcelas||[]).filter(x=>x.status!=="pago").sort((a,b)=>a.due.localeCompare(b.due))[0];p.club.proxVencimento=nx?nx.due:null;pushClub(p,`Recebido ${inst.n} — ${BRL(inst.value)}`);s.finance.unshift({id:uid(),type:"in",date:todayISO(),desc:`OrthoClub ${inst.n} — ${p.name}`,value:inst.value,author:session.name});},{action:`OrthoClub baixa ${i0?i0.n:""} — ${BRL(i0?i0.value:0)}`});renderActiveDrawer();break;}
     case"oc-genparc":commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){ensurePatient(p);p.club.parcelas=genClubParcelas(p.club);const nx=(p.club.parcelas||[]).find(x=>x.status!=="pago");p.club.proxVencimento=nx?nx.due:null;pushClub(p,"Parcelas (12x) geradas");}},{action:"Gerou parcelas OrthoClub (12x)"});renderActiveDrawer();break;
@@ -711,6 +723,7 @@ case"task-comment":{const v=$("#task-cmt-input").value.trim();if(!v)return;commi
     case"del-role":requireMaster("excluir cargo",()=>{commit(s=>{delete s.roles[id];},{action:`EXCLUIU cargo ${id}`,critical:true});});break;
     case"master-ok":{const pw=$("#master-pw").value;if(pw!==MASTER){$("#master-err").style.display="block";return;}const cb=masterPending;masterPending=null;closeModal();if(cb)cb();break;}
     case"ortho-clear":orthoBusca="";render();break;
+    case"ortho-mes-now":orthoMes=new Date().toISOString().slice(0,7);render();break;
     case"close-modal":closeModal();break;
   }
 });
@@ -734,6 +747,7 @@ document.addEventListener("change",e=>{
   if(t.dataset.act==="set-owner"){const v=t.value;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){p.owner=v||null;pushHist(p,v?"Responsável alterado":"Lead solto (volta para a equipe)","etapa");}},{action:"Alterou responsável"});renderActiveDrawer();}
   if(t.dataset.act==="period-date"){period.from=$("#pf-from")?.value||period.from;period.to=$("#pf-to")?.value||period.to;render();}
   if(t.dataset.act==="ortho-search"){const v=t.value;orthoBusca=v;const cards=document.querySelectorAll('[data-act="open-ortho"]');render();const inp=$("#ortho-busca");if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}}
+  if(t.dataset.act==="ortho-mes"){orthoMes=t.value||new Date().toISOString().slice(0,7);render();}
 });
 
 /* drag & drop */
