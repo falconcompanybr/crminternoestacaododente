@@ -357,6 +357,7 @@ function clientsView(){
 }
 
 /* ===== PACIENTES (todos) ===== */
+  function tasksView(){const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name:"—";};const ab=state.tasks.filter(t=>t.status==="aberta");const fe=state.tasks.filter(t=>t.status==="concluída");const row=t=>`<tr class="clk" data-act="open-task" data-id="${t.id}"><td><span class="row" style="gap:8px"><input type="checkbox" ${t.status==="concluída"?"checked":""} data-act="toggle-task" data-id="${t.id}"><b>${esc(t.title)}</b></span></td><td>${t.owner?esc(on(t.owner).split(" ")[0]):"—"}</td><td class="muted">${t.due?fmtDate(t.due):"—"}</td><td><span class="badge t-${t.status==='concluída'?'emerald':'amber'}">${t.status}</span></td></tr>`;const tbl=a=>`<div class="card mb"><table><thead><tr><th>Tarefa</th><th>Responsável</th><th>Prazo</th><th>Status</th></tr></thead><tbody>${a.map(row).join("")}</tbody></table></div>`;return `<div class="between mb"><div><h2 class="h2">Tarefas</h2><p class="sub">${ab.length} aberta(s) · ${fe.length} concluída(s)</p></div><button class="btn btn-primary" data-act="new-task">${svg("plus",16)} Nova tarefa</button></div>${ab.length?tbl(ab):""}${fe.length?tbl(fe):""}${!state.tasks.length?'<div class="card"><div class="empty">Nenhuma tarefa ainda. Clique em "Nova tarefa".</div></div>':""}`;}
 /* ===== AGENDA (calendário) ===== */
 function agendaView(){
   const on=id=>{const u=state.users.find(u=>u.id===id);return u?u.name.split(" ")[0]:"Equipe";};
