@@ -214,6 +214,7 @@ async function initFirebase(){const app=await import("https://www.gstatic.com/fi
 let state=loadLocal()||seedState();
 let session=null,view="dashboard",openId=null,drawerType=null,drawerTab="neg",teamTab="membros",finTab="visao";
 let period={mode:"geral",from:todayISO(),to:todayISO()};
+let orthoBusca="";
 function commit(mut,audit){mut(state);if(audit)state.audit.unshift({id:uid(),at:stamp(),who:session?session.name:"Sistema",...audit});persist();render();}
 const effectivePerms=u=>(u.permissions!==null&&u.permissions!==undefined)?u.permissions:(state.roles[u.role]?.permissions||[]);
 const can=m=>session&&effectivePerms(session).includes(m);
@@ -538,7 +539,9 @@ function auditView(){
 
 /* ===== ORTHOCLUB ===== */
 function orthoView(){
-  const members=state.patients.filter(p=>{ensurePatient(p);return p.club.active;});
+  const allMembers=state.patients.filter(p=>{ensurePatient(p);return p.club.active;});
+  const termo=orthoBusca.trim().toLowerCase();
+  const members=termo?allMembers.filter(p=>(p.name||"").toLowerCase().includes(termo)||(p.phone||"").toLowerCase().includes(termo)||(p.club.ortodontista||"").toLowerCase().includes(termo)):allMembers;
   const receitaRec=members.filter(m=>m.club.status==="Ativo").reduce((s,m)=>s+(+m.club.mensalidade||0),0);
   const recebidas=members.reduce((s,m)=>s+(m.club.pagamentos||[]).reduce((a,x)=>a+x.value,0),0);
   const atrasadas=members.filter(m=>m.club.status==="Em atraso").reduce((s,m)=>s+(+m.club.mensalidade||0),0);
@@ -547,6 +550,8 @@ function orthoView(){
   const novos=members.filter(m=>monthsSince(m.club.dataEntrada)===0).length;
   const cards=members.map(p=>{const c=p.club;return `<div class="card pad clk" data-act="open-ortho" data-id="${p.id}" style="cursor:pointer"><div class="between"><div class="row"><div class="av" style="background:var(--emerald)">${initials(p.name)}</div><div><div style="font-weight:600">${esc(p.name)}</div><div class="faint" style="font-size:12px">${esc(c.ortodontista||"—")}</div></div></div><span class="badge t-${c.status==='Ativo'?'emerald':c.status==='Em atraso'?'amber':'rose'}">${c.status}</span></div><div class="between" style="margin-top:10px;font-size:13px"><span>${BRL(c.mensalidade)}/mês</span><span class="faint">${c.proxVencimento?fmtDate(c.proxVencimento):"sem data"}</span></div><div class="between" style="margin-top:6px;font-size:12px;color:var(--faint)"><span>Próx. manut. ${fmtDate(c.proxManutencao)}</span><span>Benef. ${(c.limpeza.uses||0)+(c.extracao.uses||0)}</span></div></div>`;}).join("");
   return `<div class="between mb"><div><h2 class="h2">OrthoClub</h2><p class="sub">Plano de assinatura · clique no card para abrir a ficha</p></div><button class="btn btn-primary" data-act="new-ortho">${svg("plus",16)} Novo membro</button></div>
+    <div class="row mb" style="gap:8px;max-width:420px"><span style="color:var(--faint)">${svg("search",16)}</span><input class="input" id="ortho-busca" placeholder="Pesquisar por nome, telefone ou ortodontista…" value="${esc(orthoBusca)}" data-act="ortho-search">${orthoBusca?`<button class="btn btn-sm" data-act="ortho-clear">Limpar</button>`:""}</div>
+    ${termo?`<p class="faint mb" style="font-size:12px;margin-top:-6px">${members.length} resultado(s) para "<b>${esc(orthoBusca)}</b>"${members.length===0?" · nenhum membro encontrado":""}</p>`:""}
     <div class="card pad gold mb"><div class="uppr" style="color:#fff8e1">Receita recorrente OrthoClub</div><div style="font-size:28px;font-weight:700">${BRL(receitaRec)} <span style="font-size:14px;font-weight:500">/mês</span></div><div style="font-size:12px;opacity:.9">${members.length} membros · benefícios usados: ${benUsed}</div></div>
     <div class="kpis mb" style="grid-template-columns:repeat(3,1fr)">${kpi("Membros ativos",members.filter(m=>m.club.status==='Ativo').length)}${kpi("Novos membros",novos)}${kpi("Mensalidades recebidas",BRL(recebidas))}${kpi("Mensalidades atrasadas",BRL(atrasadas))}${kpi("Limpezas pendentes",limpPend)}${kpi("Benefícios utilizados",benUsed)}</div>
     <div class="grid" style="grid-template-columns:repeat(2,1fr)">${cards||'<div class="card"><div class="empty">Nenhum membro no OrthoClub. Use "Novo membro" ou ative o plano na ficha de um paciente.</div></div>'}</div>`;
@@ -649,6 +654,7 @@ case"task-comment":{const v=$("#task-cmt-input").value.trim();if(!v)return;commi
     case"save-role":{const name=id||$("#nr-name").value.trim();if(!name)return;const perms=Array.from(document.querySelectorAll(".rperm:checked")).map(c=>c.value);commit(s=>{const builtin=s.roles[name]?s.roles[name].builtin:false;s.roles[name]={permissions:perms,builtin};},{action:id?`Editou cargo ${name}`:`Criou cargo ${name}`});closeModal();break;}
     case"del-role":requireMaster("excluir cargo",()=>{commit(s=>{delete s.roles[id];},{action:`EXCLUIU cargo ${id}`,critical:true});});break;
     case"master-ok":{const pw=$("#master-pw").value;if(pw!==MASTER){$("#master-err").style.display="block";return;}const cb=masterPending;masterPending=null;closeModal();if(cb)cb();break;}
+    case"ortho-clear":orthoBusca="";render();break;
     case"close-modal":closeModal();break;
   }
 });
@@ -671,6 +677,7 @@ document.addEventListener("change",e=>{
   if(t.dataset.act==="set-stage"){const v=t.value;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){const old=stage(p.stage).label;p.stage=v;p.daysIn=0;if(v==="fechou")p.closedAt=todayISO();pushHist(p,`Etapa: ${old} → ${stage(v).label}`,"etapa");if(v==="fechou"&&!p.financeBooked&&(+p.closedValue>0)){p.financeBooked=true;s.finance.unshift({id:uid(),type:"in",date:todayISO(),desc:`Fechamento — ${p.name} (${p.treatment})`,value:+p.closedValue,author:session.name});}}},{action:`Moveu paciente para ${stage(v).label}`});renderActiveDrawer();}
   if(t.dataset.act==="set-owner"){const v=t.value;commit(s=>{const p=s.patients.find(x=>x.id===id);if(p){p.owner=v||null;pushHist(p,v?"Responsável alterado":"Lead solto (volta para a equipe)","etapa");}},{action:"Alterou responsável"});renderActiveDrawer();}
   if(t.dataset.act==="period-date"){period.from=$("#pf-from")?.value||period.from;period.to=$("#pf-to")?.value||period.to;render();}
+  if(t.dataset.act==="ortho-search"){const v=t.value;orthoBusca=v;const cards=document.querySelectorAll('[data-act="open-ortho"]');render();const inp=$("#ortho-busca");if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}}
 });
 
 /* drag & drop */
